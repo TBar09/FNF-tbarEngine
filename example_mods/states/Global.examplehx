@@ -1,0 +1,80 @@
+/**
+ * A global menu script that runs across the whole game until it's corresponding modpack is disabled.
+ * (NOTE: Global scripts are still a bit buggy. They are at a usable state, but if you want to play it safe, then it's best to not use it.)
+ 
+ * It's also important to note that only ONE global script is allowed at a time, and it's usually from the global/topmost modpack.
+ */
+ 
+function onCreate() {
+	// Triggered when the script is started; some variables weren't created yet.
+}
+
+function onCreatePost() {
+	// Triggered at the end of "create".
+}
+
+function onFocusLost() {
+	// Triggered when the window loses focus.
+}
+
+function onFocusGained() {
+	// Triggered when the window gains focus.
+}
+
+function onGameResized(width:Int, height:Int) {
+	// Triggered when the window is resized.
+}
+
+function onGameStart() {
+	// Triggered when game first starts.
+}
+
+function onGameReset() {
+	// Triggered when game resets (like from Mods Menu).
+}
+
+function onGameResetPost() {
+	// Triggered at the end of "game reset". The game has finished resetting.
+}
+
+function onStateSwitch() {
+	// Triggered when you enter a new state/menu.
+}
+
+function onStateSwitchPost() {
+	// Triggered at the end of "stage switch".
+}
+
+function onStateSwitch() {
+	// Triggered when you enter a new state/menu.
+}
+
+function onStateCreate() {
+	// Triggered when the state/menu is created.
+}
+
+function onChangePresence(presence:DiscordRichPresence) {
+	// Triggered when the Discord RPC presence is changed.
+}
+
+function onDestroy() {
+	// Triggered when the script is destroyed (It's corresponding modpack was disabled).
+}
+
+// CALLBACKS THAT UPDATE CONTINUOUSLY //
+
+function onDraw() {
+	// Triggered when the game redraws.
+}
+
+function onDrawPost() {
+	// Triggered at the end of "draw".
+}
+
+function onUpdate(elapsed:Float) {
+	// Triggered when the game updates.
+}
+
+function onUpdatePost(elapsed:Float) {
+	// Triggered at the end of "update".
+}
