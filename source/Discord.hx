@@ -113,7 +113,7 @@ class DiscordClient
 		presence.startTimestamp = Std.int(startTimestamp / 1000);
 		presence.endTimestamp = Std.int(endTimestamp / 1000);
 		presence.button1Label = "Download Fork";
-		presence.button1Url = "https://github.com/TBar09/TBar-Engine/";
+		presence.button1Url = "https://github.com/TBar09/TBar-Engine";
 		presence.button2Label = "Youtube Channel";
 		presence.button2Url = "https://www.youtube.com/@tbar7460";
 		

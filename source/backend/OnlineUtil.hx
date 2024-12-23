@@ -9,16 +9,17 @@ import Controls;
 class OnlineUtil {
 	// [value, github link ext]
 	public static var onlineData:Map<String, Dynamic> = [
-		"introText" =>     ["", "online_data/IntroText.data"],
-		"latestVersion" => ["", "online_data/CurrentVersion.data"],
-		"modWebsite" =>    ["", "online_data/MainEngineWebsite.data"],
+		"introText" =>     ["ultimate rhythm gaming--probably", "online_data/intro_text.data"],
+		"latestVersion" => ["0.1.0", "online_data/latest_version.data"],
+		"modWebsite" =>    ["https://github.com/TBar09/FNF-tbarEngine/", "online_data/engine-url.data"],
 	];
-	public static final _githubLink:String = "https://raw.githubusercontent.com/TBar09/TBar-Engine/main/";
+	public static final _githubLink:String = "https://github.com/TBar09/FNF-tbarEngine/";
+	public static final _githubRaw:String = "https://raw.githubusercontent.com/TBar09/FNF-tbarEngine/refs/heads/main/";
 	
 	public static function loadOnlinePrefs()
 	{
 		for (webData => dataValue in onlineData) {
-			var http = new haxe.Http('${_githubLink}${dataValue[1]}');
+			var http = new haxe.Http('${_githubRaw}${dataValue[1]}');
 			http.onData = function (data:String)
 			{
 				onlineData.set(webData, [data.split('\n')[0], onlineData.get(webData)[1]]);
