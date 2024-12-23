@@ -1,5 +1,5 @@
 # TBar-Engine
---When 3D and Psych Engine combine--
+## When 3D and Psych Engine combine
 T-Bar Engine is a 0.6.3 Psych Engine fork that adds 3D model support + some Codename Engine quality-of-life features.
 Features from both 0.7.3 Psych Engine and Codename Engine, while still trying it's best to keep the 0.6.3 feel with
 
@@ -12,7 +12,7 @@ can make modpacks with models.
 You can now use haxe scripts as an alternative to lua scripting. Haxe scripts use the same callback names as Psych (example: onCreate, onUpdate, goodNoteHit, etc)
 while also using some functionalities from Codename scripting.
 
-##Softcoded Menus
+## Softcoded Menus
 Using haxe scripting and the "states" folder in mods, you can modify existing menus and even make your own menus for your modpacks! 
 See [unfinished] for the api on all the callbacks and menu specific callbacks.
 
