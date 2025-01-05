@@ -9,15 +9,15 @@ import hxvlc.flixel.FlxVideo; //Just so it's compiled into the build for somethi
 //Psych 1.0's VideoSprite class would end up crashing Psych so I made a new class that doesn't have this issue
 class FunkinVideo extends FlxVideoSprite {
 	public var onFinish:(skipped:Bool) -> Void;
-	
-	public static final options:Map<String, String> = [
+
+	public static var options:Map<String, String> = [
 		"looping" => ":input-repeat=65535",
 		"muted" => ":no-audio"
 	];
-	
+
 	public var skippable:Bool = false;
 	public var loaded:Bool = false;
-	
+
 	public function new(canSkip:Bool = true) {
 		this.skippable = canSkip;
 		
@@ -48,7 +48,7 @@ class FunkinVideo extends FlxVideoSprite {
 		});
 	}
 	
-	public function loadVideo(filePath:String, ?loop:Dynamic = false, muted:Dynamic = false):Bool {
+	public function loadVideo(filePath:String, ?loop:Dynamic = false):Bool {
 		if(!loaded) {
 			this.load(filePath, loop ? ['input-repeat=65545'] : null);
 			loaded = true;

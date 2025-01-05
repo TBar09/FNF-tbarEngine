@@ -32,7 +32,7 @@ using StringTools;
 
 class MainMenuState extends MusicBeatState
 {
-	public static var tbarEngineVersion:String = '0.1.0'; //This is also used for Discord RPC
+	public static var tbarEngineVersion:String = '0.1.5'; //This is also used for Discord RPC
 	public static var curSelected:Int = 0;
 
 	public var menuItems:FlxTypedGroup<FlxSprite>;

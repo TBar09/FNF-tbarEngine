@@ -35,6 +35,7 @@ class Paths
 		'characters',
 		'custom_events',
 		'custom_notetypes',
+		#if NDLL_ALLOWED 'ndlls', #end
 		'data',
 		'songs',
 		'music',
@@ -44,7 +45,7 @@ class Paths
 		'videos',
 		'images',
 		'stages',
-		'states',
+		#if SOFTCODED_STATES 'states', #end
 		'weeks',
 		'fonts',
 		'scripts',
@@ -52,10 +53,8 @@ class Paths
 	];
 	#end
 
-	public static function excludeAsset(key:String) {
-		if (!dumpExclusions.contains(key))
-			dumpExclusions.push(key);
-	}
+	public static function excludeAsset(key:String)
+		if (!dumpExclusions.contains(key)) dumpExclusions.push(key);
 
 	public static var dumpExclusions:Array<String> =
 	[
@@ -144,58 +143,42 @@ class Paths
 	}
 	
 	inline public static function getSharedPath(file:String = '')
-	{
 		return 'assets/shared/$file';
-	}
 
 	static public function getLibraryPath(file:String, library = "preload")
-	{
 		return if (library == "preload" || library == "default") getPreloadPath(file); else getLibraryPathForce(file, library);
-	}
 
-	inline static function getLibraryPathForce(file:String, library:String)
-	{
-		var returnPath = '$library:assets/$library/$file';
-		return returnPath;
+	inline static function getLibraryPathForce(file:String, library:String) {
+		var str = '$library:assets/$library/$file';
+		return str;
 	}
 
 	inline public static function getPreloadPath(file:String = '')
-	{
 		return 'assets/$file';
-	}
 
 	inline static public function file(file:String, type:AssetType = TEXT, ?library:String)
-	{
 		return getPath(file, type, library);
-	}
 
 	inline static public function txt(key:String, ?library:String)
-	{
 		return getPath('data/$key.txt', TEXT, library);
-	}
+
 
 	inline static public function xml(key:String, ?library:String)
-	{
 		return getPath('data/$key.xml', TEXT, library);
-	}
+
 
 	inline static public function json(key:String, ?library:String)
-	{
 		return getPath('data/$key.json', TEXT, library);
-	}
+
 
 	inline static public function shaderFragment(key:String, ?library:String)
-	{
 		return getPath('shaders/$key.frag', TEXT, library);
-	}
+
 	inline static public function shaderVertex(key:String, ?library:String)
-	{
 		return getPath('shaders/$key.vert', TEXT, library);
-	}
-	inline static public function lua(key:String, ?library:String)
-	{
+
+	inline static public function lua(key:String, ?library:String) 
 		return getPath('$key.lua', TEXT, library);
-	}
 	
 	//AWAY3D PATHS
 	inline static public function obj(key:String) return getModelPath(key, "obj");
@@ -221,6 +204,35 @@ class Paths
 	}
 	#end
 	//
+	
+	#if NDLL_ALLOWED
+	inline static public function ndll(key:String) {
+		#if MODS_ALLOWED
+		var file:String = modsNdll(key + "-" + backend.NdllUtil.os + ".ndll");
+		if(FileSystem.exists(file)) {
+			return file;
+		}
+		#end
+		return 'assets/$key';
+	}
+	
+	static public function modsNdll(key:String) {
+		if(currentModDirectory != null && currentModDirectory.length > 0) {
+			var fileToCheck:String = "mods/" + currentModDirectory + '/' + key;
+			if(FileSystem.exists(fileToCheck)) {
+				return fileToCheck;
+			}
+		}
+
+		for(mod in getGlobalMods()) {
+			var fileToCheck:String = "mods/" + mod + '/' + key;
+			if(FileSystem.exists(fileToCheck))
+				return fileToCheck;
+
+		}
+		return 'mods/' + key;
+	}
+	#end
 	
 	public static function getPack(?folder:String = null):Dynamic
 	{
@@ -258,9 +270,7 @@ class Paths
 	}
 
 	inline static public function soundRandom(key:String, min:Int, max:Int, ?library:String)
-	{
 		return sound(key + FlxG.random.int(min, max), library);
-	}
 
 	inline static public function music(key:String, ?library:String):Sound
 	{
@@ -453,42 +463,33 @@ class Paths
 	}
 
 	#if MODS_ALLOWED
-	inline static public function mods(key:String = '') {
+	inline static public function mods(key:String = '')
 		return 'mods/' + key;
-	}
 
-	inline static public function modsFont(key:String) {
+	inline static public function modsFont(key:String)
 		return modFolders('fonts/' + key);
-	}
 
-	inline static public function modsJson(key:String) {
+	inline static public function modsJson(key:String)
 		return modFolders('data/' + key + '.json');
-	}
 
-	inline static public function modsVideo(key:String) {
+	inline static public function modsVideo(key:String)
 		return modFolders('videos/' + key + '.' + VIDEO_EXT);
-	}
 
-	inline static public function modsSounds(path:String, key:String) {
+	inline static public function modsSounds(path:String, key:String)
 		return modFolders(path + '/' + key + '.$SOUND_EXT');
-	}
 
-	inline static public function modsImages(key:String) {
+	inline static public function modsImages(key:String)
 		return modFolders('images/' + key + '.png');
-	}
 
-	inline static public function modsXml(key:String) {
+	inline static public function modsXml(key:String)
 		return modFolders('images/' + key + '.xml');
-	}
 
-	inline static public function modsTxt(key:String) {
+	inline static public function modsTxt(key:String)
 		return modFolders('images/' + key + '.txt');
-	}
 	
 	#if SOFTCODED_STATES
-	inline static public function modsStates(key:String, state:String) {
+	inline static public function modsStates(key:String, state:String)
 		return modFolders('states/$state/$key.hx');
-	}
 	
 	inline static public function getStateScripts(folder:String):Array<String> {
 		var foldersToCheck:Array<String> = [Paths.getPreloadPath('states/' + folder + '/')];

@@ -3,6 +3,13 @@ package hscript;
 import hscript.Expr.Error;
 import hscript.*;
 
+import flixel.FlxG;
+#if sys
+import sys.io.File;
+#else
+import openfl.utils.Assets;
+#end
+
 using StringTools;
 //Code is a modified version of another mod's code, props to them.
 interface HscriptInterface {
@@ -14,7 +21,7 @@ interface HscriptInterface {
 
 class HScript implements HscriptInterface {
 
-    public static var classes:Map<String, Class<Dynamic>> = [ //All the default classes
+    public static var classes:Map<String, Dynamic> = [ //All the default classes
 		//Haxe Classes
         "Math" => Math,
         "Std" => Std,
@@ -64,9 +71,9 @@ class HScript implements HscriptInterface {
 		"FlxTypedGroup" => flixel.group.FlxGroup.FlxTypedGroup,
 		"FlxSpriteGroup" => flixel.group.FlxSpriteGroup,
 		"FlxTypeText" => flixel.addons.text.FlxTypeText,
-		#if (!flash && sys) "FlxRuntimeShader" => flixel.addons.display.FlxRuntimeShader, #end
+		#if (!flash) "FlxRuntimeShader" => flixel.addons.display.FlxRuntimeShader, #end
 		"ShaderFilter"	=> openfl.filters.ShaderFilter,
-		
+
 		//T-Bar Engine
 		#if SOFTCODED_STATES
 		"ModScriptState" => backend.ModScriptState,
@@ -74,7 +81,8 @@ class HScript implements HscriptInterface {
 		"MusicBeatState" => MusicBeatState,
 		"MusicBeatSubstate" => MusicBeatSubstate,
 		#end
-		
+		#if NDLL_ALLOWED "NdllUtil" => backend.NdllUtil, #end
+
 		//Extras with abstracts
 		"FlxPoint" => CoolUtil.getMacroAbstractClass("flixel.math.FlxPoint"),
 		"FlxAxes" => CoolUtil.getMacroAbstractClass("flixel.util.FlxAxes"),
@@ -82,7 +90,7 @@ class HScript implements HscriptInterface {
     ];
 	public static var staticVariables:Map<String, Dynamic> = [];
 
-    public static var parser:Parser;
+    public var parser:Parser;
     public var interp:Interp;
     public var expr:Expr;
     public var scriptName:String;
@@ -110,13 +118,13 @@ class HScript implements HscriptInterface {
 
         try {
             parser.line = 1; //Reset the parser position.
-            expr = parser.parseString(#if sys sys.io.File.getContent(path) #else openfl.utils.Assets.getText(path) #end, path);
+            expr = parser.parseString(#if sys File.getContent(path) #else Assets.getText(path) #end, path);
 
 			interp.variables.set("this", this);
 
 			for (val in classes.keys()) interp.variables.set(val, classes[val]);
 
-            if (flixel.FlxG.state is PlayState) {
+            if (FlxG.state is PlayState) {
                 interp.scriptObject = PlayState.instance;
 				interp.publicVariables = PlayState.instance.variables;
 				
@@ -158,7 +166,7 @@ class HScript implements HscriptInterface {
 					return false;
 				});
             } else {
-				interp.scriptObject = (flixel.FlxG.state.subState == null ? flixel.FlxG.state : flixel.FlxG.state.subState);
+				interp.scriptObject = (FlxG.state.subState == null ? FlxG.state : FlxG.state.subState);
 
 				interp.variables.set("game", interp.scriptObject);
 				interp.variables.set('add', interp.scriptObject.add);
@@ -189,12 +197,12 @@ class HScript implements HscriptInterface {
             interp.execute(expr);
             call("onCreate", []);
         } catch (e) {
-            flixel.FlxG.stage.window.alert('Error on Haxe Script.\n${e.toString()}', 'Error on haxe script!');
+            FlxG.stage.window.alert('Error on Haxe Script.\n${e.toString()}', 'Error on haxe script!');
         }
     }
 	
 	function addHScriptExtras() {
-		interp.variables.set("state", flixel.FlxG.state);
+		interp.variables.set("state", FlxG.state);
 		interp.variables.set("trace", hscriptTrace);
 		interp.variables.set('Function_StopLua', FunkinLua.Function_StopLua);
 		interp.variables.set('Function_Stop', FunkinLua.Function_Stop);
@@ -206,8 +214,7 @@ class HScript implements HscriptInterface {
 				subScripts.push(new HScript((absolute ? path : scriptPath)));
 				return true;
 			} catch (e) {
-				trace('importScript: Path "${(absolute ? path : scriptPath)}" does not exist!');
-				if (flixel.FlxG.state is PlayState) PlayState.instance.addTextToDebug('importScript: Path "${(absolute ? path : scriptPath)}" does not exist!', 0xFFFF0000);
+				CoolUtil.hxTrace('importScript: Path "${(absolute ? path : scriptPath)}" does not exist!', 0xFFFF0000);
 				return false;
 			}
 	
@@ -218,19 +225,17 @@ class HScript implements HscriptInterface {
 			{
 				if(this.modFolder == null)
 				{
-					trace('getModSetting: Argument #2 is null and script is not inside a packed Mod folder!');
-					if (flixel.FlxG.state is PlayState) PlayState.instance.addTextToDebug('getModSetting: Argument #2 is null and script is not inside a packed Mod folder!', 0xFFFF0000);
+					CoolUtil.hxTrace('getModSetting: Argument #2 is null and script is not inside a packed Mod folder!', 0xFFFF0000);
 					return null;
 				}
 				modName = this.modFolder;
 			}
 			return CoolUtil.getModSetting(saveTag, modName);
 		});
-		
 		interp.variables.set("app", {
 			title: openfl.Lib.application.meta["name"],
 			file: openfl.Lib.application.meta["file"],
-			version: '0.1.0',
+			version: MainMenuState.tbarEngineVersion,
 			dimensions: {width: 1280, height: 720}
 		});
 	}
@@ -242,8 +247,7 @@ class HScript implements HscriptInterface {
 
     function traceError(e:Error) {
         var errorString:String = e.toString();
-        trace(errorString);
-		if (flixel.FlxG.state is PlayState) PlayState.instance.addTextToDebug(errorString, 0xFFFF0000);
+		CoolUtil.hxTrace(errorString, 0xFFFF0000);
     }
 
     public function get(name:String) {
@@ -251,10 +255,8 @@ class HScript implements HscriptInterface {
         return interp.variables.get(name);
     }
 
-    public function set(variable:String, data:Dynamic) {
-        if (interp != null)
-            interp.variables.set(variable, data);
-    }
+    public function set(variable:String, data:Dynamic)
+        if (interp != null) interp.variables.set(variable, data);
 
     public function call(func:String, args:Array<Dynamic>):Dynamic {
         if (interp == null) return null;
@@ -265,10 +267,17 @@ class HScript implements HscriptInterface {
         return hasParams ? Reflect.callMethod(null, functionVar, args) : functionVar();
     }
 	
-	public function setParent(parent:Dynamic) {
-		if (interp != null) interp.scriptObject = parent;
+	public function setParent(parent:Dynamic)
+		if(interp != null) interp.scriptObject = parent;
+	
+	public function setPublicMap(map:Map<String, Dynamic>) {
+		if(interp != null) interp.publicVariables = map;
+		return this;
 	}
-
+	
+	public function getScriptParent():Dynamic
+		return (FlxG.state.subState == null ? FlxG.state : FlxG.state.subState);
+	
     public function stop() {
 		for (sub in subScripts) {
 			sub.call("onDestroy", []);
@@ -280,18 +289,9 @@ class HScript implements HscriptInterface {
         interp = null;
     }
 
-    public static function initParser() {
+    public function initParser() {
         parser = new hscript.Parser();
         parser.allowJSON = parser.allowMetadata = parser.allowTypes = true;
-        parser.preprocesorValues = [
-            "sys" => #if (sys) true #else false #end,
-            "desktop" => #if (desktop) true #else false #end,
-            "windows" => #if (windows) true #else false #end,
-            "mac" => #if (mac) true #else false #end,
-            "linux" => #if (linux) true #else false #end,
-			"cpp" => #if (cpp) true #else false #end,
-			"mobile" => #if (mobile) true #else false #end,
-			"html5" => #if (html5) true #else false #end
-        ];
+        parser.preprocesorValues = CoolUtil.getHScriptPreprocessors();
     }
 }

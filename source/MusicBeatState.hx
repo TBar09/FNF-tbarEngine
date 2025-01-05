@@ -259,8 +259,8 @@ class MusicBeatState extends FlxUIState
 	public function setOnMenuScript(variable:String, arg:Dynamic) {
 		#if (HXSCRIPT_ALLOWED && SOFTCODED_STATES)
 		if(!scriptsAllowed) return;
-		for (i in 0...menuScriptArray.length) {
-			menuScriptArray[i].set(variable, arg);
+		for (script in menuScriptArray) {
+			script.set(variable, arg);
 		}
 		#end
 	}

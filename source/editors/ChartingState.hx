@@ -399,14 +399,12 @@ class ChartingState extends MusicBeatState
 
 		updateGrid();
 		
-		//#if CRASH_HANDLER Main.FridayGame.onGameCrash.add(crashSave); #end
 		#if CRASH_HANDLER crashSaveEnabled = true; #end
 		super.create();
 	}
 	
 	#if CRASH_HANDLER
 	override function destroy() {
-		//Main.FridayGame.onGameCrash.remove(crashSave);
 		#if CRASH_HANDLER crashSaveEnabled = false; #end
 		super.destroy();
 	}
@@ -1766,25 +1764,7 @@ class ChartingState extends MusicBeatState
 				}
 			}
 
-			if (FlxG.keys.justPressed.SPACE)
-			{
-				if (FlxG.sound.music.playing)
-				{
-					FlxG.sound.music.pause();
-					if(vocals != null) vocals.pause();
-				}
-				else
-				{
-					if(vocals != null) {
-						vocals.play();
-						vocals.pause();
-						vocals.time = FlxG.sound.music.time;
-						vocals.play();
-					}
-					FlxG.sound.music.play();
-				}
-			}
-
+			if (FlxG.keys.justPressed.SPACE) toggleSong(FlxG.sound.music.playing);
 			if (!FlxG.keys.pressed.ALT && FlxG.keys.justPressed.R)
 			{
 				if (FlxG.keys.pressed.SHIFT)
@@ -2097,6 +2077,21 @@ class ChartingState extends MusicBeatState
 		if(daZoom < 1) zoomThing = Math.round(1 / daZoom) + ' / 1';
 		zoomTxt.text = 'Zoom: ' + zoomThing;
 		reloadGridLayer();
+	}
+
+	function toggleSong(pauseSong:Bool) {
+		if (pauseSong) {
+			FlxG.sound.music.pause();
+			if(vocals != null) vocals.pause();
+		} else {
+			if(vocals != null) {
+				vocals.play();
+				vocals.pause();
+				vocals.time = FlxG.sound.music.time;
+				vocals.play();
+			}
+			FlxG.sound.music.play();
+		}
 	}
 
 	/*
@@ -3005,8 +3000,7 @@ class ChartingState extends MusicBeatState
 		updateGrid();
 	}
 
-	private function saveLevel()
-	{
+	private function saveLevel() {
 		if(_song.events != null && _song.events.length > 1) _song.events.sort(sortByTime);
 		var json = {
 			"song": _song
@@ -3016,6 +3010,7 @@ class ChartingState extends MusicBeatState
 
 		if ((data != null) && (data.length > 0))
 		{
+			if(FlxG.sound.music.playing) toggleSong(true); //Force pauses the song to fix a crash when you save while playing a song with autopause off
 			_file = new FileReference();
 			_file.addEventListener(Event.COMPLETE, onSaveComplete);
 			_file.addEventListener(Event.CANCEL, onSaveCancel);
@@ -3052,8 +3047,7 @@ class ChartingState extends MusicBeatState
 		return FlxSort.byValues(FlxSort.ASCENDING, Obj1[0], Obj2[0]);
 	}
 
-	private function saveEvents()
-	{
+	private function saveEvents() {
 		if(_song.events != null && _song.events.length > 1) _song.events.sort(sortByTime);
 		var eventsSong:Dynamic = {
 			events: _song.events
@@ -3064,8 +3058,8 @@ class ChartingState extends MusicBeatState
 
 		var data:String = Json.stringify(json, "\t");
 
-		if ((data != null) && (data.length > 0))
-		{
+		if ((data != null) && (data.length > 0)) {
+			if(FlxG.sound.music.playing) toggleSong(true);
 			_file = new FileReference();
 			_file.addEventListener(Event.COMPLETE, onSaveComplete);
 			_file.addEventListener(Event.CANCEL, onSaveCancel);

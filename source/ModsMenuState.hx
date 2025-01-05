@@ -496,26 +496,10 @@ class ModsMenuState extends MusicBeatState
 			if(needaReset)
 			{
 				//MusicBeatState.switchState(new TitleState());
-				TitleState.initialized = false;
-				TitleState.closedState = false;
-				OutdatedState.leftState = false;
-				FlxG.sound.music.fadeOut(0.3);
-				if(FreeplayState.vocals != null)
-				{
-					FreeplayState.vocals.fadeOut(0.3);
-					FreeplayState.vocals = null;
-				}
-				FlxG.camera.fade(FlxColor.BLACK, 0.5, false, function() {
-					#if GLOBAL_SCRIPTS hscript.ScriptGlobal.destroyModScript(); #end
-					FlxG.resetGame();
-				}, false);
+				CoolUtil.resetGame();
 			}
 			else
 			{
-				/*#if GLOBAL_SCRIPTS 
-				hscript.ScriptGlobal.destroyModScript();
-				hscript.ScriptGlobal.addGlobalScript();
-				#end*/
 				#if MODS_ALLOWED Discord.DiscordClient.loadModRPC(); #end
 				MusicBeatState.switchState(new MainMenuState());
 			}

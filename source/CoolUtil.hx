@@ -10,6 +10,7 @@ import lime.app.Application;
 import openfl.display.BlendMode;
 import animateatlas.AtlasFrameMaker;
 import Type.ValueType;
+import flixel.util.FlxColor;
 #if sys
 import sys.io.File;
 import sys.FileSystem;
@@ -27,7 +28,6 @@ class CoolUtil
 		'Hard'
 	];
 	public static var defaultDifficulty:String = 'Normal'; //The chart that has no suffix and starting difficulty on Freeplay/Story Mode
-
 	public static var difficulties:Array<String> = [];
 
 	inline public static function quantize(f:Float, snap:Float){
@@ -54,13 +54,10 @@ class CoolUtil
 	}
 
 	public static function difficultyString():String
-	{
 		return difficulties[PlayState.storyDifficulty].toUpperCase();
-	}
 
-	inline public static function boundTo(value:Float, min:Float, max:Float):Float {
+	inline public static function boundTo(value:Float, min:Float, max:Float):Float
 		return Math.max(min, Math.min(max, value));
-	}
 
 	public static function coolTextFile(path:String):Array<String>
 	{
@@ -71,10 +68,7 @@ class CoolUtil
 		if(Assets.exists(path)) daList = Assets.getText(path).trim().split('\n');
 		#end
 
-		for (i in 0...daList.length)
-		{
-			daList[i] = daList[i].trim();
-		}
+		for (i in 0...daList.length) daList[i] = daList[i].trim();
 
 		return daList;
 	}
@@ -83,10 +77,7 @@ class CoolUtil
 		var daList:Array<String> = [];
 		daList = string.trim().split('\n');
 
-		for (i in 0...daList.length)
-		{
-			daList[i] = daList[i].trim();
-		}
+		for (i in 0...daList.length) daList[i] = daList[i].trim();
 
 		return daList;
 	}
@@ -94,19 +85,19 @@ class CoolUtil
 		var countByColor:Map<Int, Int> = [];
 		for(col in 0...sprite.frameWidth){
 			for(row in 0...sprite.frameHeight){
-			  var colorOfThisPixel:Int = sprite.pixels.getPixel32(col, row);
-			  if(colorOfThisPixel != 0){
-				  if(countByColor.exists(colorOfThisPixel)){
-				    countByColor[colorOfThisPixel] =  countByColor[colorOfThisPixel] + 1;
-				  }else if(countByColor[colorOfThisPixel] != 13520687 - (2*13520687)){
-					 countByColor[colorOfThisPixel] = 1;
-				  }
-			  }
+				var colorOfThisPixel:Int = sprite.pixels.getPixel32(col, row);
+				if(colorOfThisPixel != 0){
+					if(countByColor.exists(colorOfThisPixel)){
+						countByColor[colorOfThisPixel] =  countByColor[colorOfThisPixel] + 1;
+					}else if(countByColor[colorOfThisPixel] != 13520687 - (2*13520687)){
+						countByColor[colorOfThisPixel] = 1;
+					}
+				}
 			}
-		 }
+		}
 		var maxCount = 0;
 		var maxKey:Int = 0;//after the loop this will store the max color
-		countByColor[flixel.util.FlxColor.BLACK] = 0;
+		countByColor[FlxColor.BLACK] = 0;
 			for(key in countByColor.keys()){
 			if(countByColor[key] >= maxCount){
 				maxCount = countByColor[key];
@@ -119,21 +110,38 @@ class CoolUtil
 	public static function numberArray(max:Int, ?min = 0):Array<Int>
 	{
 		var dumbArray:Array<Int> = [];
-		for (i in min...max)
-		{
+		for (i in min...max) {
 			dumbArray.push(i);
 		}
 		return dumbArray;
 	}
-	
+
 	//T-BAR ENGINE FUNCTIONS//
+
+	//Thanks to Ghostglowdev for this. I forgot Reflect.fields was a thing
+	public static function structToMap(struct:Dynamic) {
+		var map = new Map<String, Dynamic>();
+    	for (key in Reflect.fields(struct)) map.set(key, Reflect.field(struct, key));
+    	return map;
+  	}
 	
-	public static function redrawWindowHeader() {
-		flixel.FlxG.stage.window.borderless = true;
-		flixel.FlxG.stage.window.borderless = false;
-	}
+	public static dynamic function resetGame() {
+		TitleState.initialized = false;
+		TitleState.closedState = false;
+		OutdatedState.leftState = false;
+		FlxG.sound.music.fadeOut(0.3);
+		if(FreeplayState.vocals != null)
+		{
+			FreeplayState.vocals.fadeOut(0.3);
+			FreeplayState.vocals = null;
+		}
+		FlxG.camera.fade(0xFF000000, 0.5, false, function() {
+			#if GLOBAL_SCRIPTS hscript.ScriptGlobal.destroyModScript(); #end
+			FlxG.resetGame();
+		}, false);
+  	}
 	
-	public static function getBuildTarget() {
+	inline static public function getBuildTarget() {
 		#if windows
 		return 'windows';
 		#elseif linux
@@ -150,6 +158,15 @@ class CoolUtil
 		return 'unknown';
 		#end
 	}
+
+	#if HXSCRIPT_ALLOWED
+	public static dynamic function getHScriptPreprocessors() {
+		var preprocessors:Map<String, Dynamic> = backend.macros.MacroUtil.defines;
+		preprocessors.set("CODENAME_ENGINE", false);
+
+		return preprocessors;
+	}
+	#end
 	
 	//still learning this stuff, just took it from the DDT+ mod, so props to them
 	
@@ -164,7 +181,7 @@ class CoolUtil
 		* @param   name			The name of the save file.
 		* @param   newPath		Whether or not the save file is from a HaxeFlixel title that's on 5.0.0+.
 	**/
-	public static function flixelSaveCheck(company:String, title:String, localPath:String = 'ninjamuffin99', name:String = 'funkin', newPath:Bool = false):Bool
+	public static function flixelSaveCheck(company:String, title:String, localPath:String = 'ninjamuffin99', name:String = 'funkin', newPath:Bool = false, underFlixel5:Bool = false):Bool
 	{
 		// FlxSave stuff
 		var invalidChars = ~/[ ~%&\\;:"',<>?#]+/;
@@ -175,9 +192,7 @@ class CoolUtil
 			var path = company;
 
 			if (path == null || path == "")
-			{
 				path = "HaxeFlixel";
-			}
 			else
 			{
 				#if html5
@@ -196,92 +211,18 @@ class CoolUtil
 		if (newPath)
 			path = haxe.io.Path.normalize('$directory/../../../$localPath') + "/";
 		else
-			path = haxe.io.Path.normalize('$directory/../../../$company/$title/$localPath') + "/";
+			path = haxe.io.Path.normalize(underFlixel5 ? '$directory/../../../$company/$title/$localPath' + "/" : '$directory/../../../$company/$title/$localPath' + "/");
 
 		name = StringTools.replace(name, "//", "/");
-		name = StringTools.replace(name, "//", "/");
 
-		if (StringTools.startsWith(name, "/"))
-		{
-			name = name.substr(1);
-		}
+		if (StringTools.startsWith(name, "/")) name = name.substr(1);
+		if (StringTools.endsWith(name, "/")) name = name.substring(0, name.length - 1);
 
-		if (StringTools.endsWith(name, "/"))
-		{
-			name = name.substring(0, name.length - 1);
-		}
-
-		if (name.indexOf("/") > -1)
-		{
+		if (name.indexOf("/") > -1) {
 			var split = name.split("/");
 			name = "";
 
-			for (i in 0...(split.length - 1))
-			{
-				name += "#" + split[i] + "/";
-			}
-
-			name += split[split.length - 1];
-		}
-
-		return #if sys FileSystem.exists(path + name + ".sol") #else Assets.exists(path + name + ".sol") #end;
-	}
-	
-	//this is specifically for flixel saves that dont have the "ninjamuffin99" folder
-	public static function flixelSaveCheckDX(company:String, title:String, name:String = 'funkin', localPath:String = 'ninjamuffin99', newPath:Bool = false):Bool
-	{
-		// FlxSave stuff
-		var invalidChars = ~/[ ~%&\\;:"',<>?#]+/;
-
-		// Avoid checking for .sol files directly in AppData
-		if (localPath == "")
-		{
-			var path = company;
-
-			if (path == null || path == "")
-			{
-				path = "HaxeFlixel";
-			}
-			else
-			{
-				#if html5
-				// most chars are fine on browsers
-				#else
-				path = invalidChars.split(path).join("-");
-				#end
-			}
-
-			localPath = path;
-		}
-
-		var directory = lime.system.System.applicationStorageDirectory;
-		var path = '';
-
-		if (newPath)
-			path = haxe.io.Path.normalize('$directory/../../../$localPath') + "/";
-		else
-			path = haxe.io.Path.normalize('$directory/../../../$company/$title') + "/";
-
-		name = StringTools.replace(name, "//", "/");
-		name = StringTools.replace(name, "//", "/");
-
-		if (StringTools.startsWith(name, "/"))
-		{
-			name = name.substr(1);
-		}
-
-		if (StringTools.endsWith(name, "/"))
-		{
-			name = name.substring(0, name.length - 1);
-		}
-
-		if (name.indexOf("/") > -1)
-		{
-			var split = name.split("/");
-			name = "";
-
-			for (i in 0...(split.length - 1))
-			{
+			for (i in 0...(split.length - 1)) {
 				name += "#" + split[i] + "/";
 			}
 
@@ -293,68 +234,27 @@ class CoolUtil
 	
 	public static function openPizzaHut() browserLoad("https://www.pizzahut.com/");
 	
-	//END OF THAT//
-	
+	public static dynamic function hxTrace(text:Dynamic, color:FlxColor) {
+		if(FlxG.state is PlayState) PlayState.instance.addTextToDebug(Std.string(text), color);
+		else trace(text);
+	}
+
+	//END//
+
 	//Base game thank you
 	public static function coolLerp(base:Float, target:Float, ratio:Float):Float
 		return base + cameraLerp(ratio) * (target - base);
 
 	public static function cameraLerp(lerp:Float):Float
 		return lerp * (FlxG.elapsed / (1 / 60));
-	
-	//Thank you to the Codename Engine devs for some of the code here
+
 	#if HXSCRIPT_ALLOWED
 	/**
 	 * Gets the macro class created by hscript-improved for an abstract / enum
 	 */
 	@:noUsing public static inline function getMacroAbstractClass(className:String) return Type.resolveClass('${className}_HSC');
 	#end
-	
-	//Psych 0.7 stuff
-	public static function getVarInArray(instance:Dynamic, variable:String, allowMaps:Bool = false):Any
-	{
-		var splitProps:Array<String> = variable.split('[');
-		if(splitProps.length > 1)
-		{
-			var target:Dynamic = null;
-			if(PlayState.instance.variables.exists(splitProps[0]))
-			{
-				var retVal:Dynamic = PlayState.instance.variables.get(splitProps[0]);
-				if(retVal != null)
-					target = retVal;
-			}
-			else
-				target = Reflect.getProperty(instance, splitProps[0]);
 
-			for (i in 1...splitProps.length)
-			{
-				var j:Dynamic = splitProps[i].substr(0, splitProps[i].length - 1);
-				target = target[j];
-			}
-			return target;
-		}
-		
-		if(allowMaps && isMap(instance))
-		{
-			//trace(instance);
-			return instance.get(variable);
-		}
-
-		if(PlayState.instance.variables.exists(variable))
-		{
-			var retVal:Dynamic = PlayState.instance.variables.get(variable);
-			if(retVal != null)
-				return retVal;
-		}
-		return Reflect.getProperty(instance, variable);
-	}
-	
-	public static function isMap(variable:Dynamic)
-	{
-		if(variable.exists != null && variable.keyValueIterator != null) return true;
-		return false;
-	}
-	
 	public static function getModSetting(saveTag:String, ?modName:String = null)
 	{
 		#if MODS_ALLOWED
@@ -367,11 +267,9 @@ class CoolUtil
 			if(settings == null || !settings.exists(saveTag))
 			{
 				if(settings == null) settings = new Map<String, Dynamic>();
-				var data:String = File.getContent(path);
 				try
 				{
-					//var parsedJson:Dynamic = tjson.TJSON.parse(data);
-					var parsedJson:Dynamic = haxe.Json.parse(data);
+					var parsedJson:Dynamic = haxe.Json.parse(#if sys File.getContent(path) #else Assets.getText(path) #end);
 					for (i in 0...parsedJson.length)
 					{
 						var sub:Dynamic = parsedJson[i];
@@ -393,9 +291,7 @@ class CoolUtil
 						}
 					}
 					FlxG.save.data.modSettings.set(modName, settings);
-				}
-				catch(e:Dynamic)
-				{
+				} catch(e:Dynamic) {
 					var errorTitle = 'Mod name: ' + Paths.currentModDirectory;
 					var errorMsg = 'An error occurred: $e';
 					#if windows
@@ -409,8 +305,7 @@ class CoolUtil
 		{
 			FlxG.save.data.modSettings.remove(modName);
 			#if (LUA_ALLOWED || HXSCRIPT_ALLOWED)
-			if(flixel.FlxG.state is PlayState) PlayState.instance.addTextToDebug('getModSetting: $path could not be found!', 0xFFFF0000);
-			else trace('getModSetting: $path could not be found!');
+			CoolUtil.hxTrace('getModSetting: $path could not be found!', 0xFFFF0000);
 			#else
 			FlxG.log.warn('getModSetting: $path could not be found!');
 			#end
@@ -419,7 +314,7 @@ class CoolUtil
 
 		if(settings.exists(saveTag)) return settings.get(saveTag);
 		#if (LUA_ALLOWED || HXSCRIPT_ALLOWED)
-		PlayState.instance.addTextToDebug('getModSetting: "$saveTag" could not be found inside $modName\'s settings!', 0xFFFF0000);
+		CoolUtil.hxTrace('getModSetting: "$saveTag" could not be found inside $modName\'s settings!', 0xFFFF0000);
 		#else
 		FlxG.log.warn('getModSetting: "$saveTag" could not be found inside $modName\'s settings!');
 		#end
@@ -428,13 +323,11 @@ class CoolUtil
 	}
 
 	//uhhhh does this even work at all? i'm starting to doubt
-	public static function precacheSound(sound:String, ?library:String = null):Void {
+	public static function precacheSound(sound:String, ?library:String = null):Void
 		Paths.sound(sound, library);
-	}
 
-	public static function precacheMusic(sound:String, ?library:String = null):Void {
+	public static function precacheMusic(sound:String, ?library:String = null):Void
 		Paths.music(sound, library);
-	}
 
 	public static function browserLoad(site:String) {
 		#if linux
