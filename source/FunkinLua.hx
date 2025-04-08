@@ -59,7 +59,7 @@ import Controls;
 import DialogueBoxPsych;
 import backend.LuaUtil;
 
-#if hscript
+#if (hscript || HXSCRIPT_ALLOWED)
 import hscript.Parser;
 import hscript.Interp;
 import hscript.Expr;
@@ -95,8 +95,8 @@ class FunkinLua {
 	public var modFolder:String = null;
 	public var closed:Bool = false;
 
-	#if hscript
-	public static var hscript:HScript = null;
+	#if hscript 
+	public static var hscript:HaxeCode = null;
 	#end
 	
 	public var callbacks:Map<String, Dynamic> = new Map<String, Dynamic>();
@@ -814,6 +814,8 @@ class FunkinLua {
 			}
 			luaTrace("removeLuaScript: Script doesn't exist!", false, false, FlxColor.RED);
 		});
+		
+		//Hscript stuff
 
 		Lua_helper.add_callback(lua, "runHaxeCode", function(codeToRun:String) {
 			var retVal:Dynamic = null;
@@ -847,6 +849,7 @@ class FunkinLua {
 			}
 			#end
 		});
+		//
 
 		Lua_helper.add_callback(lua, "loadSong", function(?name:String = null, ?difficultyNum:Int = -1) {
 			if(name == null || name.length < 1)
@@ -2052,20 +2055,9 @@ class FunkinLua {
 				}
 			}
 
-			if(spr != null)
-			{
-				switch(pos.trim().toLowerCase())
-				{
-					case 'x':
-						spr.screenCenter(X);
-						return;
-					case 'y':
-						spr.screenCenter(Y);
-						return;
-					default:
-						spr.screenCenter(XY);
-						return;
-				}
+			if(spr != null) {
+				spr.screenCenter(getAxisFromString(pos.trim().toLowerCase()));
+				return;
 			}
 			luaTrace("screenCenter: Object " + obj + " doesn't exist!", false, false, FlxColor.RED);
 		});
@@ -2854,9 +2846,7 @@ class FunkinLua {
 			}));
 		});
 		
-		Lua_helper.add_callback(lua, "browserLoad", function(url:String) {
-			if(url != null) CoolUtil.browserLoad(url) else luaTrace("browserLoad: There is no url parameter!", false, false, FlxColor.RED);
-		});
+		Lua_helper.add_callback(lua, "browserLoad", CoolUtil.browserLoad);
 		
 		Lua_helper.add_callback(lua, "getDataFromURL", function(websiteLink:String = 'http') {
 			var http = new haxe.Http(websiteLink);
@@ -2894,10 +2884,10 @@ class FunkinLua {
 				if(leObj != null) {
 					leObj.shader = new ChromaShader();
 					return true;
-				} else {
-					return false;
-					luaTrace("setSpriteChroma: Object not found!", false, false, FlxColor.RED);
 				}
+
+				luaTrace("setSpriteChroma: Object not found!", false, false, FlxColor.RED);
+				return false;
 			#else
 				luaTrace("setSpriteChroma: Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 				return false;
@@ -2933,6 +2923,8 @@ class FunkinLua {
 			return list;
 		});
 
+		#if HXSCRIPT_ALLOWED LuaUtil.implementHxScriptFunctions(this, scriptName); #end
+		#if desktop DiscordClient.addLuaCallbacks(this.lua); #end
 		LuaUtil.implementCppFunctions(this);
 		LuaUtil.implementDeprecatedFunctions(this);
 
@@ -2943,6 +2935,12 @@ class FunkinLua {
 
 		call('onCreate', []);
 		#end
+	}
+	
+	public function addLocalCallback(name:String, func:Dynamic)
+	{
+		callbacks.set(name, func);
+		Lua_helper.add_callback(lua, name, func); //just so that it gets called
 	}
 
 	public static function isOfTypes(value:Any, types:Array<Dynamic>)
@@ -3557,7 +3555,7 @@ class FunkinLua {
 	{
 		if(hscript == null) {
 			trace('initializing haxe interp for: $scriptName');
-			hscript = new HScript(); //TO DO: Fix issue with 2 scripts not being able to use the same variable names
+			hscript = new HaxeCode(this); //TO DO: Fix issue with 2 scripts not being able to use the same variable names
 		}
 	}
 	#end
@@ -3607,7 +3605,7 @@ class DebugLuaText extends FlxText
 	public function new(text:String, parentGroup:FlxTypedGroup<DebugLuaText>, color:FlxColor) {
 		this.parentGroup = parentGroup;
 		super(10, 10, 0, text, 16);
-		setFormat(Paths.font("DIN Medium.ttf"), 16, color, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		setFormat("DIN Medium.ttf", 16, color, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		scrollFactor.set();
 		borderSize = 1;
 	}
@@ -3659,11 +3657,12 @@ class CustomSubstate extends MusicBeatSubstate
 	}
 }
 
-#if hscript
-class HScript
+#if (hscript && !HXSCRIPT_ALLOWED) //runHaxeCode legacy, original 0.6.3 runHaxeCode syntax & features
+class HaxeCode
 {
 	public static var parser:Parser = new Parser();
 	public var interp:Interp;
+	public var parentLua:FunkinLua;
 
 	public var variables(get, never):Map<String, Dynamic>;
 	public var defaultClasses:Map<String, Dynamic> = [
@@ -3711,26 +3710,112 @@ class HScript
 		return interp.variables;
 	}
 
-	public function new()
+	public function new(?parent:FunkinLua)
 	{
 		interp = new Interp();
 		for(key => value in defaultClasses) interp.variables.set(key, value);
 		for(key => func in defaultFunctions) interp.variables.set(key, func);
-		
-		@:privateAccess {
-			interp.assignOp("??=", function(v1, v2) return v1 == null ? v2 : v1);
-			interp.binops.set("??", function(e1, e2) {
-				var expr1:Dynamic = interp.expr(e1);
-				return expr1 == null ? interp.expr(e2) : expr1;
-			});
-		}
+		this.parentLua = parent;
 	}
 
 	public function execute(codeToRun:String):Dynamic
 	{
-		@:privateAccess HScript.parser.line = 1;
-		HScript.parser.allowTypes = true;
-		return interp.execute(HScript.parser.parseString(codeToRun));
+		@:privateAccess HaxeCode.parser.line = 1;
+		HaxeCode.parser.allowTypes = true;
+		return interp.execute(HaxeCode.parser.parseString(codeToRun));
+	}
+}
+#elseif (HXSCRIPT_ALLOWED) //runHaxeCode will now use updated hscript-improved features & syntax
+class HaxeCode {
+	public static var parser:Parser;
+	public var interp:Interp;
+	public var parentLua:FunkinLua;
+
+	public var variables(get, never):Map<String, Dynamic>;
+	public function get_variables() return interp.variables;
+
+	public var defaultClasses:Map<String, Dynamic> = [
+		'FlxG' => flixel.FlxG,
+		'FlxSprite' => flixel.FlxSprite,
+		'FlxCamera' => flixel.FlxCamera,
+		'FlxTimer' => flixel.util.FlxTimer,
+		'FlxTween' => flixel.tweens.FlxTween,
+		'FlxEase' => flixel.tweens.FlxEase,
+		'PlayState' => PlayState,
+		'game' => PlayState.instance,
+		
+		'Paths' => Paths,
+		'Conductor' => Conductor,
+		'ClientPrefs' => ClientPrefs,
+		
+		'Character' => Character,
+		'Alphabet' => Alphabet,
+		'CustomSubstate' => CustomSubstate,
+		#if (!flash && sys) 'FlxRuntimeShader' => flixel.addons.display.FlxRuntimeShader, #end
+		'ShaderFilter' => openfl.filters.ShaderFilter,
+		'StringTools' => StringTools
+	];
+	public var defaultFunctions:Map<String, Dynamic> = [
+		'setVar' => function(name:String, value:Dynamic) {
+			PlayState.instance.variables.set(name, value);
+		},
+		'getVar' => function(name:String) {
+			var result:Dynamic = null;
+			if(PlayState.instance.variables.exists(name)) result = PlayState.instance.variables.get(name);
+			return result;
+		},
+		'removeVar' => function(name:String) {
+			if(PlayState.instance.variables.exists(name))
+			{
+				PlayState.instance.variables.remove(name);
+				return true;
+			}
+			return false;
+		},
+		'add' => function(basic:flixel.FlxBasic, ?frontOfChars:Bool = false) {
+			if (frontOfChars) {
+				PlayState.instance.add(basic);
+				return;
+			}
+
+			var position:Int = PlayState.instance.members.indexOf(PlayState.instance.gfGroup);
+			if(PlayState.instance.members.indexOf(PlayState.instance.boyfriendGroup) < position) position = PlayState.instance.members.indexOf(PlayState.instance.boyfriendGroup);
+			else if(PlayState.instance.members.indexOf(PlayState.instance.dadGroup) < position) position = PlayState.instance.members.indexOf(PlayState.instance.dadGroup);
+			PlayState.instance.insert(position, basic);
+		},
+		'insert' => PlayState.instance.insert,
+		'remove' => PlayState.instance.remove,
+		'addBehindGF' => PlayState.instance.addBehindGF,
+		'addBehindDad' => PlayState.instance.addBehindDad,
+		'addBehindBF' => PlayState.instance.addBehindBF,
+		'buildTarget' => CoolUtil.getBuildTarget()
+	];
+
+	public function new(?parent:FunkinLua) {
+		initParser();
+		interp = new Interp();
+
+		for(key => value in defaultClasses) interp.variables.set(key, value);
+		for(key => func in defaultFunctions) interp.variables.set(key, func);
+		
+		if(FlxG.state is PlayState) interp.scriptObject = PlayState.instance;
+		if(parent != null) {
+			this.parentLua = parent;
+			interp.variables.set('this', this);
+			interp.variables.set('parentLua', parent);
+			interp.variables.set('scriptName', parent.scriptName);
+		}
+	}
+
+	function initParser() {
+		parser = new hscript.Parser();
+		parser.preprocesorValues = CoolUtil.getHScriptPreprocessors();
+	}
+
+	public function execute(codeToRun:String):Dynamic {
+		@:privateAccess HaxeCode.parser.line = 1;
+		HaxeCode.parser.allowTypes = true;
+		return interp.execute(HaxeCode.parser.parseString(codeToRun));
 	}
 }
 #end

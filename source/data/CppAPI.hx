@@ -1,5 +1,7 @@
 package data;
 
+import flixel.FlxG;
+
 using StringTools;
 class CppAPI
 {
@@ -30,8 +32,8 @@ class CppAPI
 		CppBackend.setWindowColorMode(isDarkMode);
 		
 		if(redrawHeader) {
-			flixel.FlxG.stage.window.borderless = true;
-			flixel.FlxG.stage.window.borderless = false;
+			FlxG.stage.window.borderless = true;
+			FlxG.stage.window.borderless = false;
 		}
 	}
 
@@ -53,8 +55,37 @@ class CppAPI
 	
 	public static function redrawWindowHeader()
     {
-		flixel.FlxG.stage.window.borderless = true;
-		flixel.FlxG.stage.window.borderless = false;
+		FlxG.stage.window.borderless = true;
+		FlxG.stage.window.borderless = false;
     }
 	#end
+	
+	public static function makeMessageBox(title:String, text:String, ?icon:MessageBoxIcon = MB_ICONINFORMATION, ?msgType:MessageBoxType = MB_OK) {
+		#if (cpp && windows)
+		if(title != null && text != null) return CppBackend.makeMessageBox(title, text, icon, msgType);
+		else {
+			trace('Error: "title" or "text" parameter is null.');
+			return 0;
+		}
+		#end
+	}
+}
+
+enum abstract MessageBoxIcon(Int) {
+	var MB_ICONWARNING = 0x00000030;
+	var MB_ICONINFORMATION = 0x00000040;
+	var MB_ICONQUESTION = 0x00000020;
+	var MB_ICONERROR = 0x00000010;
+	var MB_NONE = 0x00;
+}
+
+enum abstract MessageBoxType(Int) {
+	var MB_ABORTRETRYIGNORE = 0x00000002;
+	var MB_CANCELTRYCONTINUE = 0x00000006;
+	var MB_HELP = 0x00004000;
+	var MB_OKCANCEL = 0x00000001;
+	var MB_RETRYCANCEL = 0x00000005;
+	var MB_YESNO = 0x00000004;
+	var MB_YESNOCANCEL = 0x00000003;
+	var MB_OK = 0x00000000;
 }

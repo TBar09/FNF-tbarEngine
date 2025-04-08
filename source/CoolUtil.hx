@@ -160,14 +160,25 @@ class CoolUtil
 	}
 
 	#if HXSCRIPT_ALLOWED
+	/**
+	 * Gets the hscript preprocessors for haxe scripts and runHaxeCode
+	 */
 	public static dynamic function getHScriptPreprocessors() {
 		var preprocessors:Map<String, Dynamic> = backend.macros.MacroUtil.defines;
-		preprocessors.set("CODENAME_ENGINE", false);
+		preprocessors.set("TBAR_ENGINE", true);
+		preprocessors.set("TBAR_ENGINE_VER", MainMenuState.tbarEngineVersion);
+		preprocessors.set("BUILD_TARGET", getBuildTarget());
+		preprocessors.set("INITIAL_STATE", Type.getClassName(Type.getClass(FlxG.state)));
 
 		return preprocessors;
 	}
+
+	/**
+	 * Gets the macro class created by hscript-improved for an abstract / enum
+	 */
+	@:noUsing public static inline function getMacroAbstractClass(className:String) return Type.resolveClass('${className}_HSC');
 	#end
-	
+
 	//still learning this stuff, just took it from the DDT+ mod, so props to them
 	
 	//company can be found in the source through the project.xml, people usually keep it as ShadowMario
@@ -247,13 +258,6 @@ class CoolUtil
 
 	public static function cameraLerp(lerp:Float):Float
 		return lerp * (FlxG.elapsed / (1 / 60));
-
-	#if HXSCRIPT_ALLOWED
-	/**
-	 * Gets the macro class created by hscript-improved for an abstract / enum
-	 */
-	@:noUsing public static inline function getMacroAbstractClass(className:String) return Type.resolveClass('${className}_HSC');
-	#end
 
 	public static function getModSetting(saveTag:String, ?modName:String = null)
 	{

@@ -1,29 +1,25 @@
 # TBar-Engine
-## When 3D and Psych Engine combine
+--When 3D and Psych Engine combine--
 T-Bar Engine is a 0.6.3 Psych Engine fork that adds 3D model support + some Codename Engine quality-of-life features.
-Features from both 0.7.3 Psych Engine and Codename Engine, while still trying it's best to keep the 0.6.3 feel with
+Features from both 0.7.3 Psych Engine and Codename Engine, while also adding entirely new features into the mix.
+This Psych fork is meant to be used for both softmodding and source coding too!
 
 # Features
 ## Away3D
-The big one: 3D model support! Using haxe scripting, you can add your own 3D models into the game, which is fully compatible with the mods folder, so you
-can make modpacks with models.
+The big one: 3D model support! Using haxe scripting and/or runHaxeCode, you can add your own 3D models into the game, which is fully compatible with the mods folder, 
+so you can make modpacks with 3d environments.
 
 ## Haxe Scripting
 You can now use haxe scripts as an alternative to lua scripting. Haxe scripts use the same callback names as Psych (example: onCreate, onUpdate, goodNoteHit, etc)
-while also using some functionalities from Codename scripting.
+while also using some functionalities from Codename scripting, adding functions from newer Psych versions, and adding original functionalities. Haxe scripts also
+have more uses than base lua scripts, like editing other menus!
 
-## Softcoded Menus
-Using haxe scripting and the "states" folder in mods, you can modify existing menus and even make your own menus for your modpacks! 
+##Softcoded Menus
+Using haxe scripting and the "states" folder in your modpack, you can modify existing menus and even make your own menus for your modpacks! 
 See [unfinished] for the api on all the callbacks and menu specific callbacks.
 
 ## More Lua Functions
 Lua Scripts have way more lua functions added, some from 0.7.3 and even some completely new ones!
-
-## New Crash Handler
-The new crash handler will no longer close the game (unless it's an uncaught error /shrug). Instead, it will reset to the main menu.
-
-## New Videos Handler
-T-Bar Engine now uses hxvlc, making it possible to do unskippable cutscenes, midsong cutscenes, and even play videos from an online source.
 
 Example:
 ```
@@ -40,12 +36,20 @@ There are even hardcoded versions of [Ghostutil](https://github.com/AlsoGhostglo
 Example:
 ```
 setWindowProperty('borderless', true)
-windowAlert('Hi, I'm a message', 'Title Lol')
+windowAlert("Hi, I'm a message", "Title Lol")
 windowTweenY('windowGoBurY', 100, 7, 'linear')
 ```
 
+## New Crash Handler
+The new crash handler will no longer close the game (unless it's an uncaught error /shrug). Instead, it will reset to the main menu. The crash menu is even
+able to be edited by using haxe scripts.
+
+## New Videos Handler
+T-Bar Engine now uses hxvlc, making it possible to do unskippable cutscenes, midsong cutscenes, and even play videos from an online source.
+Videos are way more higher quality too!
+
 ## Installation:
-(You must have the components to compile Psych 0.6.3)
+(You must have the components to compile Psych 0.6.3, a list of haxelibs will be made soon)
 
 Some of the libraries use codename forks, so install them using:
 ```
@@ -68,6 +72,7 @@ haxelib install hxvlc 1.9.2
 ### Special Thanks
 * Psych Crew - Creating Psych Engine
 * Codename Crew - Improved classes, code, and some fixes (Like ndll support on HScript).
+* Redar13 - Forked hscript-improved with advanced preprocessors and other fixes.
 
 # Friday Night Funkin' - Psych Engine
 Engine originally used on [Mind Games Mod](https://gamebanana.com/mods/301107), intended to be a fix for the vanilla version's many issues while keeping the casual play aspect of it. Also aiming to be an easier alternative to newbie coders.

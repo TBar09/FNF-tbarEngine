@@ -26,15 +26,17 @@ import flash.geom.Rectangle;
 import flixel.ui.FlxButton;
 import flixel.FlxBasic;
 import sys.io.File;
+import backend.FunkinSignal;
 /*import haxe.zip.Reader;
 import haxe.zip.Entry;
 import haxe.zip.Uncompress;
 import haxe.zip.Writer;*/
 
 using StringTools;
-
 class ModsMenuState extends MusicBeatState
 {
+	public static var onModSwitch:FunkinSignal = new FunkinSignal();
+
 	var mods:Array<ModMetadata> = [];
 	static var changedAThing = false;
 	var bg:FlxSprite;
@@ -64,9 +66,6 @@ class ModsMenuState extends MusicBeatState
 
 	var visibleWhenNoMods:Array<FlxBasic> = [];
 	var visibleWhenHasMods:Array<FlxBasic> = [];
-	#if SOFTCODED_STATES
-	var modScript:hscript.HScript;
-	#end
 
 	override function create()
 	{
@@ -493,6 +492,8 @@ class ModsMenuState extends MusicBeatState
 			FlxG.sound.play(Paths.sound('cancelMenu'));
 			FlxG.mouse.visible = false;
 			saveTxt();
+			onModSwitch.dispatch({reset: this.needaReset, mods: this.modsList});
+
 			if(needaReset)
 			{
 				//MusicBeatState.switchState(new TitleState());

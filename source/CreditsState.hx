@@ -87,6 +87,7 @@ class CreditsState extends MusicBeatState
 			[''],
 			['Special Thanks'],
 			['Codename Engine Devs', 'codename-devs', 'Provided Forks for Away3D, Hscript-improved\n, hxdiscord_rpc, and multiple functions/ideas', 'https://github.com/FNF-CNE-Devs/CodenameEngine', '773776'],
+			['Redar13', 'redar', 'Providing PR for hscript-improved that\nfixed preprocessors', 								'https://github.com/Redar13', '999999'],
 			[''],
 			['Psych Engine Team'],
 			['Shadow Mario',		'psych/shadowmario',	'Main Programmer of Psych Engine',								'https://twitter.com/Shadow_Mario_',	'444444'],

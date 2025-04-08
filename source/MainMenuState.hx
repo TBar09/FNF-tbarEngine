@@ -20,8 +20,6 @@ import lime.app.Application;
 import Achievements;
 import editors.MasterEditorMenu;
 import flixel.input.keyboard.FlxKey;
-import flixel.addons.display.FlxBackdrop;
-import flixel.addons.display.FlxGridOverlay;
 
 #if sys
 import sys.FileSystem;
@@ -32,7 +30,7 @@ using StringTools;
 
 class MainMenuState extends MusicBeatState
 {
-	public static var tbarEngineVersion:String = '0.1.5'; //This is also used for Discord RPC
+	public static final tbarEngineVersion:String = '0.1.5h'; //This is also used for Discord RPC
 	public static var curSelected:Int = 0;
 
 	public var menuItems:FlxTypedGroup<FlxSprite>;
@@ -110,17 +108,11 @@ class MainMenuState extends MusicBeatState
 		menuItems = new FlxTypedGroup<FlxSprite>();
 		add(menuItems);
 
-		var scale:Float = 1;
-		/*if(optionShit.length > 6) {
-			scale = 6 / optionShit.length;
-		}*/
-
 		for (i in 0...optionShit.length)
 		{
 			var offset:Float = 108 - (Math.max(optionShit.length, 4) - 4) * 80;
 			var menuItem:FlxSprite = new FlxSprite(0, (i * 140)  + offset);
-			menuItem.scale.x = scale;
-			menuItem.scale.y = scale;
+			menuItem.scale.set(1, 1);
 			menuItem.frames = Paths.getSparrowAtlas('mainmenu/menu_' + optionShit[i]);
 			menuItem.animation.addByPrefix('idle', optionShit[i] + " basic", 24);
 			menuItem.animation.addByPrefix('selected', optionShit[i] + " white", 24);
@@ -137,28 +129,24 @@ class MainMenuState extends MusicBeatState
 		}
 		FlxG.camera.follow(camFollowPos, null, 1);
 
-		if(TitleState.NewUpdateAvailable)
-		{
+		if(TitleState.newUpdateAvailable) {
 			var versionShit:FlxText = new FlxText(12, FlxG.height - 84, 0, 'Latest version available: ${backend.OnlineUtil.onlineData.get("latestVersion")[1]}', 12);
 			versionShit.scrollFactor.set();
 			versionShit.setFormat("VCR OSD Mono", 16, FlxColor.GREEN, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 			add(versionShit);
 		}
 		
-		var versionShit:FlxText = new FlxText(12, FlxG.height - 64, 0, 'T-Bar Engine v$tbarEngineVersion', 12);
-		versionShit.scrollFactor.set();
-		versionShit.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-		add(versionShit);
-		
-		var versionShit:FlxText = new FlxText(12, FlxG.height - 44, 0, 'Made on Psych Engine 0.6.3', 12);
-		versionShit.scrollFactor.set();
-		versionShit.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-		add(versionShit);
-		
-		var versionShit:FlxText = new FlxText(12, FlxG.height - 24, 0, 'Friday Night Funkin\' v${Application.current.meta.get("version")}', 12);
-		versionShit.scrollFactor.set();
-		versionShit.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-		add(versionShit);
+		final versionTexts:Array<Dynamic> = [
+			['T-Bar Engine v$tbarEngineVersion', 64],
+			['Made on Psych Engine 0.6.3', 44],
+			['Friday Night Funkin\' v${Application.current.meta.get("version")}', 24]
+		];
+		for(item in versionTexts) {
+			var versionShit:FlxText = new FlxText(12, FlxG.height - item[1], 0, item[0], 12);
+			versionShit.scrollFactor.set();
+			versionShit.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			add(versionShit);
+		}
 
 		// NG.core.calls.event.logEvent('swag').send();
 
@@ -206,10 +194,8 @@ class MainMenuState extends MusicBeatState
 		{
 			if (controls.UI_UP_P) changeItem(-1);
 			else if (controls.UI_DOWN_P) changeItem(1);
-			else if (controls.BACK)
-			{
-				var ret = callOnMenuScript("onSelectedItem", ['back', -1]);
-				if(ret != FunkinLua.Function_Stop) {
+			else if (controls.BACK) {
+				if(callOnMenuScript("onSelectedItem", ['back', -1]) != FunkinLua.Function_Stop) {
 					selectedSomethin = true;
 					FlxG.sound.play(Paths.sound('cancelMenu'));
 					MusicBeatState.switchState(new TitleState());
@@ -223,23 +209,16 @@ class MainMenuState extends MusicBeatState
 			}
 			#end
 
-			if (controls.ACCEPT)
-			{
-				var ret = callOnMenuScript("onSelectedItem", [optionShit[curSelected], curSelected]);
-				if(ret != FunkinLua.Function_Stop) {
-					if (optionShit[curSelected] == 'donate')
-					{
+			if (controls.ACCEPT) {
+				if(callOnMenuScript("onSelectedItem", [optionShit[curSelected], curSelected]) != FunkinLua.Function_Stop) {
+					if (optionShit[curSelected] == 'donate') {
 						CoolUtil.browserLoad('https://ninja-muffin24.itch.io/funkin');
-					}
-					else
-					{
+					} else {
 						selectedSomethin = true;
 						FlxG.sound.play(Paths.sound('confirmMenu'));
 						if(ClientPrefs.flashing) FlxFlicker.flicker(magenta, 1.1, 0.15, false);
-						menuItems.forEach(function(spr:FlxSprite)
-						{
-							if (curSelected != spr.ID)
-							{
+						menuItems.forEach(function(spr:FlxSprite) {
+							if (curSelected != spr.ID) {
 								FlxTween.tween(spr, {alpha: 0, y: 720}, 0.4, {
 									ease: FlxEase.quadIn,
 									onComplete: function(twn:FlxTween)
@@ -247,15 +226,11 @@ class MainMenuState extends MusicBeatState
 										spr.kill();
 									}
 								});
-							}
-							else
-							{
-								FlxFlicker.flicker(spr, 1, 0.06, false, false, function(flick:FlxFlicker)
-								{
+							} else {
+								FlxFlicker.flicker(spr, 1, 0.06, false, false, function(flick:FlxFlicker) {
 									var daChoice:String = optionShit[curSelected];
 
-									switch (daChoice)
-									{
+									switch(daChoice) {
 										case 'story_mode':
 											MusicBeatState.switchState(new StoryMenuState());
 										case 'freeplay':
@@ -279,8 +254,7 @@ class MainMenuState extends MusicBeatState
 				}
 			}
 			#if desktop
-			else if (FlxG.keys.anyJustPressed(debugKeys))
-			{
+			else if (FlxG.keys.anyJustPressed(debugKeys)) {
 				selectedSomethin = true;
 				MusicBeatState.switchState(new MasterEditorMenu());
 			}

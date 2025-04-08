@@ -1,41 +1,39 @@
 package;
 
 import Sys.sleep;
-//import discord_rpc.DiscordRpc;
-
-import Sys.sleep;
 import lime.app.Application;
 import hxdiscord_rpc.Discord;
 import hxdiscord_rpc.Types;
+//import discord_rpc.DiscordRpc; //Old discord_rpc stuff
 
 import openfl.display.BitmapData;
 import flixel.util.typeLimit.OneOfTwo;
-
+import backend.FunkinSignal;
 #if LUA_ALLOWED
 import llua.Lua;
 import llua.State;
 #end
 
 using StringTools;
-
-
 class DiscordClient
 {
+	public static var onChangePresence:FunkinSignal = new FunkinSignal();
+
 	public static var isInitialized:Bool = false;
 	private static final _defaultID:String = "1180762119369666620";
 	public static var clientID(default, set):String = _defaultID;
 	private static var presence:DiscordRichPresence = DiscordRichPresence.create();
 	public static var isDiscordUser:Bool = false;
-	
+
 	//discord info variables
 	public static var userInfo:Map<String, Dynamic> = new Map<String, Dynamic>();
-	
+
 	public static function check()
 	{
 		initialize();
 		if(isInitialized) shutdown();
 	}
-	
+
 	public static function prepare()
 	{
 		if(!isInitialized) initialize();
@@ -49,7 +47,7 @@ class DiscordClient
 		Discord.Shutdown();
 		isInitialized = false;
 	}
-	
+
 	private static function onReady(request:cpp.RawConstPointer<DiscordUser>):Void {
 		var requestPtr:cpp.Star<DiscordUser> = cpp.ConstPointer.fromRaw(request).ptr;
 
@@ -57,7 +55,7 @@ class DiscordClient
 			trace('(Discord) Connected to User (${cast(requestPtr.username, String)}#${cast(requestPtr.discriminator, String)})');
 		else //Old discriminators
 			trace('(Discord) Connected to User (${cast(requestPtr.username, String)})');
-		
+
 		isDiscordUser = true;
 		updateDiscordInfo(request);
 		changePresence();
@@ -113,7 +111,7 @@ class DiscordClient
 		presence.startTimestamp = Std.int(startTimestamp / 1000);
 		presence.endTimestamp = Std.int(endTimestamp / 1000);
 		presence.button1Label = "Download Fork";
-		presence.button1Url = "https://github.com/TBar09/TBar-Engine";
+		presence.button1Url = "https://github.com/TBar09/FNF-tbarEngine";
 		presence.button2Label = "Youtube Channel";
 		presence.button2Url = "https://www.youtube.com/@tbar7460";
 		
@@ -146,7 +144,7 @@ class DiscordClient
 	}
 	#end
 
-	public static function updatePresence()Discord.UpdatePresence(cpp.RawConstPointer.addressOf(presence));
+	public static function updatePresence() Discord.UpdatePresence(cpp.RawConstPointer.addressOf(presence));
 	public static function resetClientID() clientID = _defaultID;
 
 	private static function set_clientID(newID:String)
@@ -166,7 +164,6 @@ class DiscordClient
 	#if LUA_ALLOWED
 	public static function addLuaCallbacks(lua:State) {
 		Lua_helper.add_callback(lua, "changeDiscordPresence", changePresence);
-
 		Lua_helper.add_callback(lua, "changeDiscordClientID", function(?newID:String = null) {
 			if(newID == null) newID = _defaultID;
 			clientID = newID;

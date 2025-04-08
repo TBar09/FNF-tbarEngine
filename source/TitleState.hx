@@ -84,11 +84,10 @@ class TitleState extends MusicBeatState
 	var easterEggKeysBuffer:String = '';
 	#end
 
-	var mustUpdate:Bool = false;
-	public static var NewUpdateAvailable:Bool = false;
-
 	var titleJSON:TitleData;
 
+	var mustUpdate:Bool = false;
+	public static var newUpdateAvailable:Bool = false;
 	public static var updateVersion:String = '';
 
 	override public function create():Void
@@ -123,11 +122,12 @@ class TitleState extends MusicBeatState
 		#if CHECK_FOR_UPDATES
 		if(ClientPrefs.checkForUpdates && !closedState) {
 			updateVersion = backend.OnlineUtil.onlineData.get("latestVersion")[0];
+			if(updateVersion != null && updateVersion.length > 0) updateVersion = updateVersion.trim();
 			var curVersion:String = MainMenuState.tbarEngineVersion.trim();
-			trace('Version online: ' + updateVersion + '\nYour version: ' + curVersion);
-			if(updateVersion != curVersion) {
-				trace('versions arent matching!');
-				NewUpdateAvailable = true;
+			trace('Version online: ' + updateVersion + ' - Your version: ' + curVersion);
+			if(updateVersion > curVersion) {
+				trace('version $curVersion is lower than the current version $updateVersion!');
+				newUpdateAvailable = true;
 			}
 		}
 		#end
@@ -464,7 +464,7 @@ class TitleState extends MusicBeatState
 			
 			if(pressedEnter)
 			{
-				if(callOnMenuScript("onSelectedItem", [(NewUpdateAvailable && !closedState)]) != FunkinLua.Function_Stop) {
+				if(callOnMenuScript("onSelectedItem", [(newUpdateAvailable && !closedState)]) != FunkinLua.Function_Stop) {
 					titleText.color = FlxColor.WHITE;
 					titleText.alpha = 1;
 					
@@ -478,11 +478,7 @@ class TitleState extends MusicBeatState
 
 					new FlxTimer().start(1, function(tmr:FlxTimer)
 					{
-						if (NewUpdateAvailable && !closedState) {
-							MusicBeatState.switchState(new OutdatedState());
-						} else {
-							MusicBeatState.switchState(new MainMenuState());
-						}
+						MusicBeatState.switchState(((newUpdateAvailable && !closedState) ? new OutdatedState() : new MainMenuState()));
 						closedState = true;
 					});
 					// FlxG.sound.play(Paths.music('titleShoot'), 0.7);

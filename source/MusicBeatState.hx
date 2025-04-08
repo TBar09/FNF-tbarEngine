@@ -34,6 +34,11 @@ class MusicBeatState extends FlxUIState
 	private var curDecStep:Float = 0;
 	private var curDecBeat:Float = 0;
 	private var controls(get, never):Controls;
+	#if (haxe >= "4.0.0")
+	public var variables:Map<String, Dynamic> = new Map();
+	#else
+	public var variables:Map<String, Dynamic> = new Map<String, Dynamic>();
+	#end
 
 	public static var camBeat:FlxCamera;
 

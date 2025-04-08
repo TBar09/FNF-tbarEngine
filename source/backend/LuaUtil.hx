@@ -339,12 +339,20 @@ class LuaUtil {
 			#end
 		});
 
-		Lua_helper.add_callback(lua, "redrawWindowHeader", function() {
-			CppAPI.redrawWindowHeader();
-		});
+		Lua_helper.add_callback(lua, "redrawWindowHeader", CppAPI.redrawWindowHeader);
 
-		Lua_helper.add_callback(lua, "hasOsVersion", function(version:String = "Windows 10") {
-			CppAPI.hasWindowsVersion(version);
+		Lua_helper.add_callback(lua, "hasOsVersion", CppAPI.hasWindowsVersion);
+	}
+	
+	public static function implementHxScriptFunctions(funk:FunkinLua, _scriptName:String) {
+		var lua:State = funk.lua;
+
+		Lua_helper.add_callback(lua, "setOnHScript", PlayState.instance.setOnHScript);
+
+		Lua_helper.add_callback(lua, "callOnHScript", function(funcName:String, ?args:Array<Dynamic> = null, ?ignoreStops=false, ?ignoreSelf:Bool = true, ?excludeScripts:Array<String> = null, ?excludeValues:Array<Dynamic> = null) {
+			if(excludeScripts == null) excludeScripts = [];
+			if(ignoreSelf && !excludeScripts.contains(_scriptName)) excludeScripts.push(_scriptName);
+			return PlayState.instance.callOnHScript(funcName, args, ignoreStops, excludeScripts, excludeValues);
 		});
 	}
 }

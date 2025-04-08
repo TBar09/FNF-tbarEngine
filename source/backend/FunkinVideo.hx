@@ -71,7 +71,9 @@ class FunkinVideo extends FlxVideoSprite {
 	{
 		super.update(elapsed);
 		
+		#if FLX_SOUND_SYSTEM
 		bitmap.volume = getVolumeFromFlxG();
+		#end
 		if(skippable && FlxG.keys.justPressed.SPACE) {
 			if(onFinish != null) onFinish(true);
 			this.destroy();

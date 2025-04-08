@@ -1,5 +1,8 @@
 package data;
 
+import data.CppAPI.MessageBoxIcon;
+import data.CppAPI.MessageBoxType;
+
 #if windows
 @:buildXml('
 <target id="haxe">
@@ -102,5 +105,10 @@ class CppBackend
 	}
 	')
 	public static function setWindowTitleColor(color:Array<Int>) {}
+	
+	@:functionCode("return MessageBoxA(GetActiveWindow(), text, title, icon | msgType);")
+	public static function makeMessageBox(title:String, text:String, icon:MessageBoxIcon, msgType:MessageBoxType) {
+		return 0;
+	}
 	#end
 }

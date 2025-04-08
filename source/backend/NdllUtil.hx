@@ -4,7 +4,7 @@ import sys.FileSystem;
 import lime.app.Application;
 
 #if NDLL_ALLOWED
-class NdllUtil {
+@:keep class NdllUtil {
 	public static var os(get, never):String;
 	inline public static function get_os():String {
 		return CoolUtil.getBuildTarget();

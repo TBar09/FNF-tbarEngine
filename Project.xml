@@ -58,6 +58,7 @@
 	<define name="GLOBAL_SCRIPTS" /> <!-- Adds global menu scripts, which always run until the modpack is disabled-->
 	<define name="IMPORT_AWAY3D" /> <!-- Imports all away3d classes to expand Hscript compatibility with it. Increases loading times though-->
 	<define name="CUSTOM_CLASSES" /> <!-- Allows for custom classes using HScript. Increases loading times though-->
+	<define name="NDLL_ALLOWED" /> <!-- Allows for ndll support-->
 
 	<assets path="assets/preload" rename="assets" exclude="*.ogg" if="web"/>
 	<assets path="assets/preload" rename="assets" exclude="*.mp3"  unless="web"/>
@@ -66,8 +67,14 @@
 		<assets path="assets/secrets" rename="assets" exclude="*.mp3"  unless="web"/>
 	</section>
 
+	<!-- OTHER INTERNAL/BACKEND DEFINES -->
+
 	<!-- DONT ENABLE THIS -->
-	<define name="CHECK_FOR_UPDATES" if="desktop officialBuild"/>
+	<!-- <define name="CHECK_FOR_UPDATES" if="desktop officialBuild"/> -->
+	<define name="CHECK_FOR_UPDATES" if="desktop"/>
+
+	<!-- since using #if 32bits in hscript (and even in regular conditionals) throws an error -->
+	<define name="TBAR_ENGINE_32BITS" if="32bits"/>
 
 	<!-- <define name="PRELOAD_ALL" /> -->
 	<define name="PRELOAD_ALL" unless="web" />
@@ -132,7 +139,6 @@
 	<!-- _______________________________ Libraries ______________________________ -->
 
 	<haxelib name="flixel" />
-	<!-- <haxelib name="flixel" version="5.5.0"/> -->
 	<haxedev set='webgl' />
 
 	<!--In case you want to use the addons package-->
@@ -149,9 +155,8 @@
 	<haxelib name="hxvlc" version="1.9.2" if="VIDEOS_ALLOWED"/>
 	<haxelib name="faxe" if='switch'/>
 	<!--<haxelib name="polymod"/> -->
-	<!-- <haxelib name="discord_rpc" if="desktop"/> -->
 	
-	<!-- Use the Codename git for these 3 -->
+	<!-- Use the Codename git for these three -->
 	<haxelib name="hxdiscord_rpc" if="desktop"/>
 	<haxelib name="away3d"/>
 	<haxelib name="hscript-improved" if="HXSCRIPT_ALLOWED"/>
