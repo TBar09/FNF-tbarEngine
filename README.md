@@ -92,7 +92,7 @@ Future plans are to (hopefully) add Linux & MacOS support from newer Psych versi
 onSectionHit shows that all of the future sections get played immediately on song start. If you have any ideas on how to fix this, please
 make a pull request!
 
-##Pull Requests
+## Pull Requests
 
 Pull requests are encouraged to make this fork the best it can be. Some of the following things that are on the to-do list are:
 - Fixing memory leaks
