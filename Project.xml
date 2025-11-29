@@ -4,7 +4,7 @@
 
 	<app
 		title="Friday Night Funkin': T-Bar Engine" file="TBarEngine"
-		packageName="com.shadowmario.psychengine" package="com.shadowmario.psychengine"
+		packageName="com.tbar.tbarengine" package="com.tbar.tbarengine"
 		main="Main" version="0.2.0" company="TBarEngine"
 	/>
 
