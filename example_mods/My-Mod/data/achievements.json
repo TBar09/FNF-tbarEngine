@@ -1,0 +1,22 @@
+[
+	{ /* No Miss Week Acievement */
+		"save": "customweek_nomiss", //Will load images/achievements/customweek_nomiss.png
+		"name": "Custom Week No Miss",
+		"description": "Name it Your week JSON file name + \"_nomiss\"\nif you want it to be handled automatically by Psych Engine",
+		"hidden": false
+	},
+	{ /* Simple Achievement */
+		"save": "test_achievement1", //Will load images/achievements/test_achievement1.png
+		"name": "Test Achievement 1",
+		"description": "This is a simple achievement with no Progress Bar",
+		"hidden": false
+	},
+	{ /* Progress Bar Achievement */
+		"save": "test_achievement2", //Will load images/achievements/test_achievement2.png
+		"name": "Test Achievement 2",
+		"description": "This is a more complex achievement with a Progress Bar and\nall changeable variables being shown.",
+		"maxScore": 40, //The max score needed in order to unlock the achievement
+		"maxDecimals": 0, //This will be how many decimals will be shown on the progress counter
+		"hidden": false
+	}
+]

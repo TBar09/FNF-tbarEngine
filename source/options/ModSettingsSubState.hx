@@ -2,20 +2,20 @@ package options;
 
 import flixel.input.keyboard.FlxKey;
 import flixel.input.gamepad.FlxGamepadInputID;
-import flixel.FlxG;
 
-//Taken from 0.7.3 Psych. Thank you to ShadowMario
+import objects.Character;
+
 class ModSettingsSubState extends BaseOptionsMenu
 {
 	var save:Map<String, Dynamic> = new Map<String, Dynamic>();
 	var folder:String;
-	
 	private var _crashed:Bool = false;
 	public function new(options:Array<Dynamic>, folder:String, name:String)
 	{
 		this.folder = folder;
 
 		title = '';
+		//title = name;
 		rpcTitle = 'Mod Settings ($name)'; //for Discord Rich Presence
 
 		if(FlxG.save.data.modSettings == null) FlxG.save.data.modSettings = new Map<String, Dynamic>();
@@ -24,15 +24,6 @@ class ModSettingsSubState extends BaseOptionsMenu
 			var saveMap:Map<String, Dynamic> = FlxG.save.data.modSettings;
 			save = saveMap[folder] != null ? saveMap[folder] : [];
 		}
-		
-		/*
-		if(FlxG.save.data.modSettings == null) FlxG.save.data.modSettings = new Map<String, Dynamic>();
-		else
-		{
-			var saveMap:Map<String, Dynamic> = FlxG.save.data.modSettings;
-			save = saveMap[folder] != null ? saveMap[folder] : [];
-		}
-		*/
 
 		//save = []; //reset for debug purposes
 		try
@@ -75,13 +66,13 @@ class ModSettingsSubState extends BaseOptionsMenu
 							newOption.getValue = function() {
 								var data = save.get(newOption.variable);
 								if(data == null) return 'NONE';
-								return !ClientPrefs.controllerMode ? data.keyboard : data.gamepad;
+								return !Controls.instance.controllerMode ? data.keyboard : data.gamepad;
 							};
 							newOption.setValue = function(value:Dynamic) {
 								var data = save.get(newOption.variable);
 								if(data == null) data = {keyboard: 'NONE', gamepad: 'NONE'};
 
-								if(!ClientPrefs.controllerMode) data.keyboard = value;
+								if(!controls.controllerMode) data.keyboard = value;
 								else data.gamepad = value;
 								save.set(newOption.variable, data);
 							};
@@ -113,7 +104,7 @@ class ModSettingsSubState extends BaseOptionsMenu
 					{
 						myValue = save.get(option.save);
 						if(newOption.type != 'keybind') newOption.setValue(myValue);
-						else newOption.setValue(!ClientPrefs.controllerMode ? myValue.keyboard : myValue.gamepad);
+						else newOption.setValue(!Controls.instance.controllerMode ? myValue.keyboard : myValue.gamepad);
 					}
 					else
 					{
@@ -139,7 +130,7 @@ class ModSettingsSubState extends BaseOptionsMenu
 			var errorTitle = 'Mod name: ' + folder;
 			var errorMsg = 'An error occurred: $e';
 			#if windows
-			flixel.FlxG.stage.window.alert(errorMsg, errorTitle);
+			lime.app.Application.current.window.alert(errorMsg, errorTitle);
 			#end
 			trace('$errorTitle - $errorMsg');
 
@@ -149,10 +140,9 @@ class ModSettingsSubState extends BaseOptionsMenu
 		}
 
 		super();
-		
+
 		bg.alpha = 0.75;
-		bg.color = 0xFFFFFFFF;
-		
+		bg.color = FlxColor.WHITE;
 		reloadCheckboxes();
 	}
 

@@ -1,0 +1,10 @@
+{
+	"name": "Name", //Name of the modpack
+	"description": "Description", //Description of the modpack
+	"version": "0.1.0", //(optional) Version number of the modpack
+	"restart": false, //(optional) Should the game restart when the mod is toggled?
+	"runsGlobally": false, //(optional) Does the mod run globally? Doesn't do much for now
+	"color": [170, 0, 255], //(optional) Color of the modpack background in the mods menu
+	"discordRPC": "863222024192262205", //(optional) The Discord RPC to use when the mod is active
+	"iconFramerate": 10 //(optional) If your modpack icon is animated, you can change the FPS here
+}

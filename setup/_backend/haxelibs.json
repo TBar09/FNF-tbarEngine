@@ -1,0 +1,70 @@
+{
+	"haxelibs": [
+		{
+			"name": "hxcpp",
+			"type": "haxelib",
+			"version": "4.2.1"
+		},
+		{
+			"name": "lime",
+			"type": "haxelib",
+			"version": "8.0.2"
+		},
+		{
+			"name": "openfl",
+			"type": "haxelib",
+			"version": "9.2.2"
+		},
+		{
+			"name": "flixel",
+			"type": "haxelib",
+			"version": "5.5.0"
+		},
+		{
+			"name": "flixel-addons",
+			"type": "haxelib",
+			"version": "3.2.1"
+		},
+		{
+			"name": "flixel-ui",
+			"type": "haxelib",
+			"version": "2.5.0"
+		},
+		{
+			"name": "hxvlc",
+			"type": "haxelib",
+			"version": "1.9.2"
+		},
+		{
+			"name": "tjson",
+			"type": "haxelib",
+			"version": null
+		},
+		{
+			"name": "flxanimate",
+			"type": "git",
+			"githubUrl": "https://github.com/ShadowMario/flxanimate.git dev"
+		},
+		{
+			"name": "linc_luajit",
+			"type": "git",
+			"githubUrl": "https://github.com/superpowers04/linc_luajit.git"
+		},
+
+		{
+			"name": "hscript-improved-dev",
+			"type": "git",
+			"githubUrl": "https://github.com/CodenameCrew/hscript-improved.git codename-dev"
+		},
+		{
+			"name": "hxdiscord_rpc",
+			"type": "git",
+			"githubUrl": "https://github.com/CodenameCrew/cne-hxdiscord_rpc.git"
+		},
+		{
+			"name": "away3d",
+			"type": "git",
+			"githubUrl": "https://github.com/CodenameCrew/away3d.git"
+		}
+	]
+}

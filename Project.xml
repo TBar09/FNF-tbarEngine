@@ -2,7 +2,11 @@
 <project>
 	<!-- _________________________ Application Settings _________________________ -->
 
-	<app title="Friday Night Funkin': T-Bar Engine" file="TBarEngine" packageName="com.shadowmario.psychengine" package="com.shadowmario.psychengine" main="Main" version="0.2.8" company="TBarEngine" />
+	<app
+		title="Friday Night Funkin': T-Bar Engine" file="TBarEngine"
+		packageName="com.shadowmario.psychengine" package="com.shadowmario.psychengine"
+		main="Main" version="0.2.0" company="TBarEngine"
+	/>
 
 	<!--Switch Export with Unique ApplicationID and Icon-->
 	<set name="APP_ID" value="0x0100f6c013bbc000" />
@@ -18,6 +22,70 @@
 	<!--Minimum without FLX_NO_GAMEPAD: 11.8, without FLX_NO_NATIVE_CURSOR: 11.2-->
 	<set name="SWF_VERSION" value="11.8" />
 
+	<!-- ______________________ PSYCH ENGINE CUSTOMIZATION ______________________ -->
+
+	<!-- Allows for modpack support. -->
+	<define name="MODS_ALLOWED" if="desktop || android" unless="html5" />
+
+	<!-- Allows for hscript support & access to the hscript-improved library. -->
+	<define name="HSCRIPT_ALLOWED" />
+
+	<!-- Allows for Lua script support & access to the linc_luaJIT library. -->
+	<define name="LUA_ALLOWED" if="desktop || android" unless="hl || html5"/>
+
+	<!-- Allows for achievements & achievement support. -->
+	<define name="ACHIEVEMENTS_ALLOWED" />
+
+	<!-- Allows for Discord RPC support & access to the hxdiscord_rpc library. -->
+	<define name="DISCORD_ALLOWED" unless="hl || html5 || android"/>
+
+	<!-- Allows for video playback support & access to the hxvlc library. -->
+	<define name="VIDEOS_ALLOWED" if="windows || linux || android" unless="32bits || hl || html5"/>
+
+	<!-- Adds the base FNF songs & assets. -->
+	<define name="BASE_GAME_FILES" />
+
+	<!-- Allows the fork to check for updates. Not recommended to use this in source mods. -->
+	<define name="CHECK_FOR_UPDATES" />
+
+	<!-- ______________________ T-BAR ENGINE CUSTOMIZATION ______________________ -->
+
+	<!-- Allows for 3D support & access to the away3d library. -->
+	<define name="AWAY3D_ALLOWED"/>
+
+	<!-- Imports all away3d classes to expand Hscript compatibility with it. Increases compile time. -->
+	<define name="IMPORT_AWAY3D" if="AWAY3D_ALLOWED"/>
+
+	<!-- Adds haxe scripting support to the menus (need to enable HSCRIPT_ALLOWED). -->
+	<define name="SOFTCODED_STATES" if="HSCRIPT_ALLOWED"/>
+
+	<!-- Allows for creating custom classes using HScript. Increases compile time. -->
+	<define name="CUSTOM_CLASSES" if="HSCRIPT_ALLOWED"/>
+
+	<!-- Adds global scripts, which always run until their respective modpack is disabled. -->
+	<define name="GLOBAL_SCRIPTS" if="HSCRIPT_ALLOWED"/>
+
+	<!-- Allows for ".ndll" support. -->
+	<define name="NDLL_ALLOWED" unless="hl || html5"/>
+
+	<!-- 
+		Adds the crash hander. To remove the crash handler completely, just comment this line out.
+		"tbar" = new crash handler that doesn't close the game
+		"psych" = original psych crash handler
+	-->
+	<define name="CRASH_HANDLER" value="tbar" if="desktop release" />
+
+	<!-- 
+		Turns on the title screen watermarks. To show the default FNF watermarks, just comment this line out.
+		"tbar" = tbar engine credits will be shown
+		"psych" = original psych credits will be shown
+	-->
+	<define name="WATERMARKS" value="tbar"/>
+
+	<section if="officialBuild">
+		<define name="TITLE_SCREEN_EASTER_EGG"/>
+	</section>
+
 	<!-- ____________________________ Window Settings ___________________________ -->
 
 	<!--These window settings apply to all targets-->
@@ -29,11 +97,15 @@
 	<!--Desktop-specific-->
 	<window if="desktop" orientation="landscape" fullscreen="false" resizable="true" vsync="false"/>
 
+	<!--Switch-specific-->
+	<window if="switch" orientation="landscape" fullscreen="true" width="0" height="0" resizable="true" />
+
 	<!--Mobile-specific-->
 	<window if="mobile" orientation="landscape" fullscreen="true" width="0" height="0" resizable="false"/>
 
-	<!--Switch-specific-->
-	<window if="switch" orientation="landscape" fullscreen="true" width="0" height="0" resizable="true" />
+	<section if="android">
+		<config:android gradle-version="7.4.2" gradle-plugin="7.3.1" />
+	</section>
 
 	<!-- _____________________________ Path Settings ____________________________ -->
 
@@ -42,135 +114,79 @@
 	<set name="BUILD_DIR" value="export/32bit" if="32bits" />
 
 	<classpath name="source" />
-	
-	<!-- PSYCH ENGINE CUSTOMIZATION -->
-	<define name="MODS_ALLOWED" if="desktop" />
-	<define name="LUA_ALLOWED" if="desktop" />
-	<define name="ACHIEVEMENTS_ALLOWED" />
-	<define name="VIDEOS_ALLOWED" if="web || windows" unless="32bits"/>
-	<define name="TBAR_WATERMARKS"/> <!-- DELETE THIS TO REMOVE WATERMARKS/DEV NAMES ON TITLE SCREEN -->
-	<define name="TITLE_SCREEN_EASTER_EGG" if="officialBuild"/> <!-- DELETE THE if="officialBuild" for enabling this on an unofficial build -->
-	<define name="CRASH_HANDLER" if="desktop release" />
-	
-	<!-- TBAR ENGINE CUSTOMIZATION -->
-	<define name="HXSCRIPT_ALLOWED" /> <!-- Adds hscript support, just like in codename! -->
-	<define name="SOFTCODED_STATES"/> <!-- Adds haxe scripting support to the menus (need to enable HXSCRIPT_ALLOWED)! -->
-	<define name="GLOBAL_SCRIPTS" /> <!-- Adds global menu scripts, which always run until the modpack is disabled-->
-	<define name="IMPORT_AWAY3D" /> <!-- Imports all away3d classes to expand Hscript compatibility with it. Increases loading times though-->
-	<define name="CUSTOM_CLASSES" /> <!-- Allows for custom classes using HScript. Increases loading times though-->
-	<define name="NDLL_ALLOWED" /> <!-- Allows for ndll support-->
 
-	<assets path="assets/preload" rename="assets" exclude="*.ogg" if="web"/>
-	<assets path="assets/preload" rename="assets" exclude="*.mp3"  unless="web"/>
-	<section if="TITLE_SCREEN_EASTER_EGG">
-		<assets path="assets/secrets" rename="assets" exclude="*.ogg" if="web"/>
-		<assets path="assets/secrets" rename="assets" exclude="*.mp3"  unless="web"/>
-	</section>
+	<!-- __________________________ Game Assets & Etc. __________________________ -->
 
-	<!-- OTHER INTERNAL/BACKEND DEFINES -->
-
-	<!-- DONT ENABLE THIS -->
-	<!-- <define name="CHECK_FOR_UPDATES" if="desktop officialBuild"/> -->
-	<define name="CHECK_FOR_UPDATES" if="desktop"/>
-
-	<!-- since using #if 32bits in hscript (and even in regular conditionals) throws an error -->
-	<define name="TBAR_ENGINE_32BITS" if="32bits"/>
-
-	<!-- <define name="PRELOAD_ALL" /> -->
-	<define name="PRELOAD_ALL" unless="web" />
-	<define name="NO_PRELOAD_ALL" unless="PRELOAD_ALL"/>
-	
-	<library name="videos"        preload="true" />
-	<section if="PRELOAD_ALL">
-		<library name="songs"         preload="true" />
-		<library name="shared"        preload="true" />
-		<library name="week2"         preload="true" />
-		<library name="week3"         preload="true" />
-		<library name="week4"         preload="true" />
-		<library name="week5"         preload="true" />
-		<library name="week6"         preload="true" />
-		<library name="week7"         preload="true" />
-	</section>
-	
-	<section if="NO_PRELOAD_ALL">
-		<library name="songs"         preload="false" />
-		<library name="shared"        preload="false" />
-		<library name="week2"         preload="false" />
-		<library name="week3"         preload="false" />
-		<library name="week4"         preload="false" />
-		<library name="week5"         preload="false" />
-		<library name="week6"         preload="false" />
-		<library name="week7"         preload="false" />
-	</section>
-	
+	<!-- Assets -->
+	<assets path="assets/fonts" />
+	<assets path="assets/shared"        exclude="*.ogg" if="web"/>
+	<assets path="assets/shared"        exclude="*.mp3" unless="web"/>
 	<assets path="assets/videos"        library="videos"        if="VIDEOS_ALLOWED"/>
 	<assets path="assets/songs"         library="songs"         exclude="*.ogg" if="web"/>
 	<assets path="assets/songs"         library="songs"         exclude="*.mp3" unless="web"/>
-	<assets path="assets/shared"        library="shared"        exclude="*.ogg" if="web"/>
-	<assets path="assets/shared"        library="shared"        exclude="*.mp3" unless="web"/>
-	<assets path="assets/week2"         library="week2"         exclude="*.ogg" if="web"/>
-	<assets path="assets/week2"         library="week2"         exclude="*.mp3" unless="web"/>
-	<assets path="assets/week3"         library="week3"         exclude="*.ogg" if="web"/>
-	<assets path="assets/week3"         library="week3"         exclude="*.mp3" unless="web"/>
-	<assets path="assets/week4"         library="week4"         exclude="*.ogg" if="web"/>
-	<assets path="assets/week4"         library="week4"         exclude="*.mp3" unless="web"/>
-	<assets path="assets/week5"         library="week5"         exclude="*.ogg" if="web"/>
-	<assets path="assets/week5"         library="week5"         exclude="*.mp3" unless="web"/>
-	<assets path="assets/week6"         library="week6"         exclude="*.ogg" if="web"/>
-	<assets path="assets/week6"         library="week6"         exclude="*.mp3" unless="web"/>
-	<assets path="assets/week7"         library="week7"         exclude="*.ogg" if="web"/>
-	<assets path="assets/week7"         library="week7"         exclude="*.mp3" unless="web"/>
-	<assets path="assets/models" embed='false'/>
-	
+	<section if="TITLE_SCREEN_EASTER_EGG">
+		<assets path="assets/secrets" rename="assets/shared" exclude="*.ogg" if="web"/>
+		<assets path="assets/secrets" rename="assets/shared" exclude="*.mp3"  unless="web"/>
+	</section>
+	<section if="BASE_GAME_FILES">
+		<assets path="assets/base_game" rename="assets" exclude="*.ogg" if="web"/>
+		<assets path="assets/base_game" rename="assets" exclude="*.mp3"  unless="web"/>
+		<assets path="assets/base_game/songs" rename="assets/songs" library="songs" exclude="*.ogg" if="web"/>
+		<assets path="assets/base_game/songs" rename="assets/songs" library="songs" exclude="*.mp3" unless="web"/>
+
+		<assets path="assets/week_assets"   library="week_assets"   rename="assets" exclude="*.ogg" if="web"/>
+		<assets path="assets/week_assets"   library="week_assets"   rename="assets" exclude="*.mp3" unless="web"/>
+		<library name="week_assets"   preload="true" />
+	</section>
+
+	<library name="videos"        preload="true" if="VIDEOS_ALLOWED"/>
+	<library name="songs"         preload="true" />
+
+	<!-- OpenAL config -->
+	<section if="desktop">
+		<assets path="alsoft.txt" rename="plugins/alsoft.ini" type="text" if="windows"/>
+		<assets path="alsoft.txt" rename="plugins/alsoft.conf" type="text" unless="windows"/>
+	</section>
+
 	<section if="MODS_ALLOWED">
 		<assets path='example_mods' rename='mods' embed='false'/>
 	</section>
 	<assets path='art/readme.txt' rename='do NOT readme.txt' />
-	<!-- <template path='mods' /> -->
-	
-	<!-- assets path="CHANGELOG.md" rename='changelog.txt' -->
 
-	<!-- NOTE FOR FUTURE SELF SINCE FONTS ARE ALWAYS FUCKY 
-		TO FIX ONE OF THEM, I CONVERTED IT TO OTF. DUNNO IF YOU NEED TO
-		THEN UHHH I USED THE NAME OF THE FONT WITH SETFORMAT() ON THE TEXT!!!
-		NOT USING A DIRECT THING TO THE ASSET!!!
-	-->
-	<assets path="assets/fonts" />
 	<!-- _______________________________ Libraries ______________________________ -->
-
-	<haxelib name="flixel" />
-	<haxedev set='webgl' />
-
-	<!--In case you want to use the addons package-->
-	<haxelib name="flixel-addons" />
-	<haxelib name="hscript" />
-	<define name="hscriptPos" />
 	
-	<!--<haxelib name="openfl" version="9.3.2" />-->
-	<!--<haxelib name="lime" version="8.0.1" />-->
+	<!--
+	<haxelib name="openfl" version="9.3.2" />
+	<haxelib name="lime" version="8.0.1" />
+	<haxelib name="flixel" version="5.5.0"/>
+	-->
 
-	<!--In case you want to use the ui package-->
+	<haxelib name="flixel" version="5.5.0"/>
+	<haxelib name="flixel-addons" version="3.2.1" />
 	<haxelib name="flixel-ui" />
+	<haxelib name="tjson" />
+
+	<!--Psych stuff needed-->
 	<haxelib name="linc_luajit" if="LUA_ALLOWED"/>
-	<haxelib name="hxvlc" version="1.9.2" if="VIDEOS_ALLOWED"/>
-	<haxelib name="faxe" if='switch'/>
-	<!--<haxelib name="polymod"/> -->
+	<haxelib name="flxanimate"/>
 	
-	<!-- Use the Codename git for these three -->
-	<haxelib name="hxdiscord_rpc" if="desktop"/>
-	<haxelib name="away3d"/>
-	<haxelib name="hscript-improved" if="HXSCRIPT_ALLOWED"/>
+	<haxelib name="hxvlc" if="VIDEOS_ALLOWED"/>
+	<haxelib name="hxdiscord_rpc" if="DISCORD_ALLOWED"/>
+
+	<haxelib name="away3d" if="AWAY3D_ALLOWED"/>
+	<haxelib name="hscript-improved-dev" if="HSCRIPT_ALLOWED"/>
+	<define name="hscriptPos" />
+
+	<!-- Disable Discord IO Thread -->
+	<haxedef name="DISCORD_DISABLE_IO_THREAD" if="hxdiscord_rpc" />
+	<haxedef name="NO_PRECOMPILED_HEADERS" if="linux" />
 
 	<!-- Enables a terminal log prompt on debug builds -->
 	<haxelib name="hxcpp-debug-server" if="debug"/>
+
 	<haxedef name="HXC_LIBVLC_LOGGING" if="VIDEOS_ALLOWED debug" />
 	<haxedef name="HXVLC_NO_SHARE_DIRECTORY" if="VIDEOS_ALLOWED" />
-
-	<!-- <haxelib name="markdown" /> -->
-	<!-- <haxelib name="HtmlParser" /> -->
-
-	<!--In case you want to use nape with flixel-->
-	<!--<haxelib name="nape-haxe4" />-->
+	
 	<!-- ______________________________ Haxedefines _____________________________ -->
 
 	<!--Enable the Flixel core recording system-->
@@ -196,29 +212,39 @@
 
 	<!--Disable the Flixel core focus lost screen-->
 	<haxedef name="FLX_NO_FOCUS_LOST_SCREEN" />
-
-	<!--Allow working memory greater than 1 Gig-->
-	<!--haxedef name="HXCPP_GC_BIG_BLOCKS"-->
-	
-	<!-- Show debug traces for hxCodec -->
-	<haxedef name="HXC_DEBUG_TRACE" if="debug" />
 	
 	<!--Disable the Flixel core debugger. Automatically gets set whenever you compile in release mode!-->
 	<haxedef name="FLX_NO_DEBUG" unless="debug" />
 
 	<!--Enable this for Nape release builds for a serious peformance improvement-->
 	<haxedef name="NAPE_RELEASE_BUILD" unless="debug" />
-	
+
 	<!--Used for Izzy Engine's crash handler-->
 	<haxedef name="HXCPP_CHECK_POINTER" if="CRASH_HANDLER" />
 	<haxedef name="HXCPP_STACK_LINE" if="CRASH_HANDLER" />
-	
+	<haxedef name="HXCPP_STACK_TRACE" if="CRASH_HANDLER" />
+
+	<haxedef name="message.reporting" value="classic" />
+
+	<!--Disable deprecated warnings-->
+	<haxedef name='no-deprecation-warnings' />
+
+	<!--Macro fixes-->
 	<haxeflag name="--macro" value="allowPackage('flash')" />
-	<haxeflag name="--macro" value="include('meta.ui')" />
+	<haxeflag name="--macro" value="include('my.pack')" />
+	<haxeflag name="--macro" value="backend.macros.MacroUtil.compileMacros()" />
+
+	<!-- Might be used later -->
+	<!--
+	<prebuild haxe="source.backend.macros.Prebuild.hx"/>
+    <postbuild haxe="source.backend.macros.Postbuild.hx"/>
+	-->
 
 	<!-- _________________________________ Custom _______________________________ -->
 
 	<!--Place custom nodes like icons here (higher priority to override the HaxeFlixel icon)-->
+
+	<assets path='art/iconOG.png' rename='icon.png' if="linux" />
 	
 	<icon path="art/iconOG.png" size='16'/>
 	<icon path="art/iconOG.png" size='32'/>

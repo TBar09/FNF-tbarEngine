@@ -1,2 +1,0 @@
-add the away3d and flx3d folders into your mod's source
-then add "openfl/utils/Assets" into your source.

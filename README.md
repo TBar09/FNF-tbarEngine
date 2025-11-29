@@ -1,33 +1,38 @@
-# TBar-Engine
---When 3D and Psych Engine combine--
-T-Bar Engine is a 0.6.3 Psych Engine fork that adds 3D model support + some Codename Engine quality-of-life features.
-Features from both 0.7.3 Psych Engine and Codename Engine, while also adding entirely new features into the mix.
-This Psych fork is meant to be used for both softmodding and source coding too!
+# T-Bar Engine
+
+T-Bar Engine is a 0.7.3 Psych Engine <ins>**fork**</ins> that originally aimed to be a Psych Engine fork with 3D support & to have my own Psych preferences, but now has expanded into a fork with multiple fixes, improvements, quality-of-life features, personal tweaks, etc.  
+
+T-Bar Engine adds content from not only newer Psych Engine versions, but from Codename Engine and even some originals. This fork is intented to be used for not
+only hardcoding, but for softcoding too!
 
 # Features
 ## Away3D
 The big one: 3D model support! Using haxe scripting and/or runHaxeCode, you can add your own 3D models into the game, which is fully compatible with the mods folder, 
-so you can make modpacks with 3d environments.
+so you can make your modpack have 3D environments.  
+All of the 3D classes are stored in the `away3d` package and all flixel3d classes are stored in the `flixel.flx3d` package.
 
 ## Haxe Scripting
 You can now use haxe scripts as an alternative to lua scripting. Haxe scripts use the same callback names as Psych (example: onCreate, onUpdate, goodNoteHit, etc)
-while also using some functionalities from Codename scripting, adding functions from newer Psych versions, and adding original functionalities. Haxe scripts also
-have more uses than base lua scripts, like editing other menus!
+while also adding some functionalities from Codename scripting, newer Psych versions, and original ones all together. Haxe scripts also
+have more uses than base lua scripts, like creating new menus!
+> [!TIP]
+> Check out the [T-Bar Engine Documentation Site](https://tbar09.github.io/tbarEngine-wiki/) for plenty more documentation, features, and tips on the fork.
+> You can also check out [Psych Engine's Lua API](https://shadowmario.github.io/psychengine.lua/) for information on base Psych Engine Lua.
 
-##Softcoded Menus
-Using haxe scripting and the "states" folder in your modpack, you can modify existing menus and even make your own menus for your modpacks! 
-See [unfinished] for the api on all the callbacks and menu specific callbacks.
+## Softcoded Menus
+Using haxe scripting, you can modify existing menus and even create your own menus for your modpacks using the `states` folder in your modpack.
+The same goes for substates too!
 
 ## More Lua Functions
-Lua Scripts have way more lua functions added, some from 0.7.3 and even some completely new ones!
+Lua Scripts have a few more functions added, some from future Psych versions and some original ones.
 
 Example:
 ```
-setWindowColorMode(true, hasWindowsVersion("10"))
+browserLoad("https://www.youtube.com/watch?v=pg2-n6gECwY")
 getDataFromURL('https://www.youtube.com')
 doTweenNumber('coolTween', 1, 45, 3, 'sineInOut')
 
-makeLuaBackdrop("coolBackdrop", "characters/BOYFRIEND", 10, 10, 'x', 0, 0)
+makeLuaBackdrop("coolBackdrop", "funkay", 10, 10, 'x', 0, 0)
 addLuaBackdrop("coolBackdrop", true)
 ```
 
@@ -36,43 +41,78 @@ There are even hardcoded versions of [Ghostutil](https://github.com/AlsoGhostglo
 Example:
 ```
 setWindowProperty('borderless', true)
-windowAlert("Hi, I'm a message", "Title Lol")
+windowAlert("Hi, I'm a message paragraph", "I am the title")
 windowTweenY('windowGoBurY', 100, 7, 'linear')
 ```
 
 ## New Crash Handler
-The new crash handler will no longer close the game (unless it's an uncaught error /shrug). Instead, it will reset to the main menu. The crash menu is even
-able to be edited by using haxe scripts.
+The new crash handler will no longer close the game (unless it's an uncaught error). Instead, it will reset to the main menu.
+You can press F2 on the crash handler to create an error log in your application folder like the original Psych crash handler.  
+The crash menu is also able to be edited using haxe scripts.
 
 ## New Videos Handler
-T-Bar Engine now uses hxvlc, making it possible to do unskippable cutscenes, midsong cutscenes, and even play videos from an online source.
+T-Bar Engine now uses hxvlc, making it possible to make unskippable cutscenes, mid-song cutscenes, and even play videos from bytes or a url.
 Videos are way more higher quality too!
 
-## Installation:
-(You must have the components to compile Psych 0.6.3, a list of haxelibs will be made soon)
+## Installation
+### Libraries:
+(You must have the components to [compile Psych 0.7.3](https://github.com/ShadowMario/FNF-PsychEngine/blob/main/docs/BUILDING.md), a list of haxelibs can be found [here](https://tbar09.github.io/tbarEngine-wiki/pages/hardcoding/haxe-libraries.html))
+
+> [!NOTE]
+> [Haxe 4.2.5](https://haxe.org/download/version/4.2.5/) was used to make compile/test this fork, but you can also use a [newer Haxe version](https://haxe.org/download/) too.
 
 Some of the libraries use codename forks, so install them using:
-```
-haxelib git hscript-improved https://github.com/CodenameCrew/hscript-improved
+```bat
+haxelib git hscript-improved-dev https://github.com/CodenameCrew/hscript-improved codename-dev
 haxelib git hxdiscord_rpc https://github.com/CodenameCrew/hxdiscord_rpc
 haxelib git away3d https://github.com/CodenameCrew/away3d
 ```
 
 For videos, run:
-```
+```bat
 haxelib install hxvlc 1.9.2
 ```
+
+You can also look into the `setup` folder & run one of the bat files to automatically setup things like haxelibs or MSVS for Windows compiling.
+
+### Supported Targets:
+
+As of version 0.2.0, these are the current targets that you can compile to:
+
+- [x] Windows
+- [x] Hashlink
+- [ ] Linux
+- [ ] MacOS
+- [ ] IOS
+- [ ] Android (Planned in the future)
+- [ ] HTML5 (You can compile to HTML5 on versions below 0.2.0, like 0.1.5h)
+
+Future plans are to (hopefully) add Linux & MacOS support from newer Psych versions.
+<p>Please note that Hashlink support has a small bug, specifically in a song where the camera will not respond to must hit sections. Tracing
+onSectionHit shows that all of the future sections get played immediately on song start. If you have any ideas on how to fix this, please
+make a pull request!
+
+##Pull Requests
+
+Pull requests are encouraged to make this fork the best it can be. Some of the following things that are on the to-do list are:
+- Fixing memory leaks
+- Hashlink section bug (see Supported Targets)
+- General Optimization
+
+## Usage
+You are freely allowed to use this fork for modpacks or hardcoded mods, as long as you give proper credits to this fork ^^.
+<p>(Also, modpacks that use this fork should state that they are made for this fork to avoid confusion)
 
 ## Credits
 ### T-Bar Engine
 * T-Bar - Main Programmer / Creator
-* Ghostglowdev: Support / Owner of Ghost Utilities
+* Ghostglowdev: Support / Owner of [Ghost's Tweaked Psych](https://github.com/AlsoGhostglowDev/Ghost-s-Tweaked-Psych) & [Ghost Utilities](https://github.com/AlsoGhostglowDev/Ghost-s-Utilities)
 * Swagaruney: Playtesting
-
+  
 ### Special Thanks
-* Psych Crew - Creating Psych Engine
-* Codename Crew - Improved classes, code, and some fixes (Like ndll support on HScript).
-* Redar13 - Forked hscript-improved with advanced preprocessors and other fixes.
+* Shadow Mario/Psych Crew - Creating [Psych Engine](https://github.com/ShadowMario/FNF-PsychEngine)
+* Codename Crew - Improved classes, code, and some fixes
+* Redar13 - Forked hscript-improved with advanced preprocessors and other fixes
 
 # Friday Night Funkin' - Psych Engine
 Engine originally used on [Mind Games Mod](https://gamebanana.com/mods/301107), intended to be a fix for the vanilla version's many issues while keeping the casual play aspect of it. Also aiming to be an easier alternative to newbie coders.
@@ -95,20 +135,24 @@ to start you off, disabling Videos should be simple, simply Delete the line `"VI
 same goes for *Lua Scripts*, comment out or delete the line with `LUA_ALLOWED`, this and other customization options are all available within the `Project.xml` file
 
 ## Credits:
-* Shadow Mario - Programmer
-* RiverOaken - Artist
-* Yoshubs - Assistant Programmer
+* Shadow Mario - Main Programmer and Head of Psych Engine.
+* Riveren - Main Artist/Animator of Psych Engine.
 
 ### Special Thanks
-* bbpanzu - Ex-Programmer
-* Yoshubs - New Input System
-* SqirraRNG - Crash Handler and Base code for Chart Editor's Waveform
-* KadeDev - Fixed some cool stuff on Chart Editor and other PRs
-* iFlicky - Composer of Psync and Tea Time, also made the Dialogue Sounds
-* PolybiusProxy - .MP4 Video Loader Library (hxCodec)
-* Keoiki - Note Splash Animations
-* Smokey - Sprite Atlas Support
-* Nebula the Zorua - LUA JIT Fork and some Lua reworks
+* bbpanzu - Ex-Team Member (Programmer).
+* crowplexus - HScript Iris, Input System v3, and Other PRs.
+* Kamizeta - Creator of Pessy, Psych Engine's mascot.
+* MaxNeton - Loading Screen Easter Egg Artist/Animator.
+* Keoiki - Note Splash Animations and Latin Alphabet.
+* SqirraRNG - Crash Handler and Base code for Chart Editor's Waveform.
+* EliteMasterEric - Runtime Shaders support and Other PRs.
+* MAJigsaw77 - .MP4 Video Loader Library (hxvlc).
+* iFlicky - Composer of Psync, Tea Time and some sound effects.
+* KadeDev - Fixed some issues on Chart Editor and Other PRs.
+* superpowers04 - LUA JIT Fork.
+* CheemsAndFriends - Creator of FlxAnimate.
+* Ezhalt - Pessy's Easter Egg Jingle.
+* MaliciousBunny - Video for the Final Update.
 _____________________________________
 
 # Features
@@ -178,4 +222,4 @@ _____________________________________
 * Lag doesn't impact the camera movement and player icon scaling anymore.
 * Some stuff based on Week 7's changes has been put in (Background colors on Freeplay, Note splashes)
 * You can reset your Score on Freeplay/Story Mode by pressing Reset button.
-* You can listen to a song or adjust Scroll Speed/Damage taken/etc. on Freeplay by pressing Space.
+* You can listen to a song or adjust Scroll Speed/Damage taken/etc. on Freeplay by pressing Space or CTRL respectively.

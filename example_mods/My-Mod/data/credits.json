@@ -1,0 +1,22 @@
+/*
+You can use a json as an alternative to using a txt file for custom credits.
+Text files will still be checked for first and will ignore json checking if
+a text file is found first.
+*/
+
+[
+	{ //Section Example
+		"name": "Cool Development Team", //The name of the section
+
+		//Set this to true to set the name as a section title
+		//You can also have a entry with just a name to achieve the same effect
+		"isTitle": true
+	},
+	{ //Credit Entry Example
+		"name": "Cool Developer", //Name
+		"icon": "misc/discord", //Will use icon image in images/credits/misc/discord.png (optional)
+		"description": "This is an example description of the Cool Developer.", //The description of the credit (optional)
+		"link": "https://codename-engine.com/", //The link when you press enter on the credit (optional)
+		"color": "00FF00" //color of the background. Formatted as "RRGGBB" (optional)
+	}
+]
