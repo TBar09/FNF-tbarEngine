@@ -1,4 +1,4 @@
-package backend;
+package backend.system;
 
 import flixel.FlxSubState;
 #if (SOFTCODED_STATES && HSCRIPT_ALLOWED)

@@ -1,7 +1,7 @@
 package states;
 
 import backend.WeekData;
-import backend.Mods;
+import backend.system.Mods;
 
 import flixel.ui.FlxButton;
 import flixel.FlxBasic;

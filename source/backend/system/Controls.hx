@@ -1,4 +1,4 @@
-package backend;
+package backend.system;
 
 import flixel.input.gamepad.FlxGamepadButton;
 import flixel.input.gamepad.FlxGamepadInputID;
@@ -156,7 +156,11 @@ class Controls
 		return false;
 	}
 
-	// IGNORE THESE
+	/* IGNORE THESE */
+	public static inline function init() {
+		instance = new Controls();
+	}
+
 	public static var instance:Controls;
 	public function new()
 	{

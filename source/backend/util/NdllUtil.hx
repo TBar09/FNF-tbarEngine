@@ -22,7 +22,7 @@ class NdllUtil {
 		trace('Loading ndll function "${name}" from "${ndllPath}".');
 
 		return Reflect.makeVarArgs(function(a:Array<Dynamic>) {
-			return backend.macros.MacroUtil.generateReflectionLike(25, "func", "a");
+			return backend.system.macros.MacroUtil.generateReflectionLike(25, "func", "a");
 		});
 		#else
 		trace("Ndlls are not supported on this platform!");

@@ -1,4 +1,4 @@
-package backend;
+package backend.system;
 
 import flixel.graphics.frames.FlxFrame.FlxFrameAngle;
 import flixel.graphics.frames.FlxAtlasFrames;
@@ -19,7 +19,7 @@ import haxe.Json;
 
 
 #if MODS_ALLOWED
-import backend.Mods;
+import backend.system.Mods;
 #end
 
 class Paths

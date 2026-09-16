@@ -4,8 +4,8 @@ import flixel.FlxState;
 import flixel.input.keyboard.FlxKey;
 import flixel.addons.transition.FlxTransitionableState;
 import backend.util.OnlineUtil;
+
 #if(CRASH_HANDLER && sys)
-import backend.macros.MacroUtil;
 import haxe.CallStack;
 import haxe.io.Path;
 import sys.io.File;
@@ -18,8 +18,8 @@ class CrashHandlerState extends MusicBeatState
 
 	public var canLeave:Bool = false;
 
-	var error:String;
-	var errorName:String;
+	var errorStr:String;
+	var errorNameStr:String;
 
 	public var bgError:FlxSprite;
 	public var errorTxt:FlxText;
@@ -29,8 +29,8 @@ class CrashHandlerState extends MusicBeatState
 	#end
 
 	public function new(prevState:FlxState, error:String, errorName:String):Void {
-        this.error = error;
-        this.errorName = errorName;
+        this.errorStr = error;
+        this.errorNameStr = errorName;
         super();
 	}
 
@@ -41,7 +41,7 @@ class CrashHandlerState extends MusicBeatState
 		var engineSite:String = (OnlineUtil.onlineData.get("modWebsite")[0].length > 0) ? OnlineUtil.onlineData.get("modWebsite")[0] : "https://github.com/TBar09/FNF-tbarEngine/";
 		FlxG.sound.playMusic(null, 0);
 
-		var errorText = "<red>* WHOOPS! T-BAR ENGINE HAS CRASHED *\n* " + errorName + " *<red>\n\nPlease take a screenshot of the error below and\ncreate a new issues page on the T-Bar Engine github\n<hyperlink>" + engineSite + "<hyperlink>\n\n" + errorName + ": " + error + "\n\n > Press any key to go to the main menu < ";
+		var errorText = "<red>* WHOOPS! T-BAR ENGINE HAS CRASHED *\n* " + errorNameStr + " *<red>\n\nPlease take a screenshot of the error below and\ncreate a new issues page on the T-Bar Engine github\n<hyperlink>" + engineSite + "<hyperlink>\n\n" + errorNameStr + ": " + errorStr + "\n\n > Press any key to go to the main menu < ";
 		bgError = new FlxSprite().makeGraphic(FlxG.width, FlxG.height, 0xFF000000);
 		add(bgError);
 
@@ -62,7 +62,7 @@ class CrashHandlerState extends MusicBeatState
 		add(saveCrashTxt);
 		#end
 
-		trace('$errorName\n$error');
+		error('$errorNameStr\n$errorStr');
 		canLeave = true;
 
 		super.create();
@@ -96,14 +96,14 @@ class CrashHandlerState extends MusicBeatState
 			var dateNow:String = Date.now().toString();
 			dateNow = dateNow.replace(" ", "_").replace(":", "'");
 
-			var errMsg:String = " * " + this.errorName + " * \n" + this.error + "\n\n";
+			var errMsg:String = " * " + this.errorNameStr + " * \n" + this.errorStr + "\n\n";
 
 			for (stackItem in callStack) {
 				switch (stackItem) {
 					case FilePos(s, file, line, column):
 						errMsg += file + " (line " + line + ")\n";
 					default:
-						MacroUtil.print(Std.string(stackItem));
+						print(Std.string(stackItem));
 				}
 			}
 
@@ -113,7 +113,7 @@ class CrashHandlerState extends MusicBeatState
 			File.saveContent(path, errMsg + "\n\nCrash log saved at " + dateNow);
 			return true;
 		} catch(e) {
-			MacroUtil.print("There was an error saving the crash dump!\nError: " + Std.string(e));
+			error("There was an error saving the crash dump!\nError: " + Std.string(e));
 		}
 		return false;
 	}

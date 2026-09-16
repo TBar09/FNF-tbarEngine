@@ -251,7 +251,7 @@ class FunkinLua implements ScriptInterface {
 		});
 		Lua_helper.add_callback(lua, "debugPrint", function(text:Dynamic = '', color:String = 'WHITE') {
 			if(FlxG.state is PlayState) PlayState.instance.addTextToDebug(text, CoolUtil.colorFromString(color));
-			else backend.macros.MacroUtil.print(text);
+			else print(text);
 		});
 
 		#if ACHIEVEMENTS_ALLOWED Achievements.addLuaCallbacks(lua); #end
@@ -1410,7 +1410,7 @@ class FunkinLua implements ScriptInterface {
 				return;
 			}
 			if(FlxG.state is PlayState) PlayState.instance.addTextToDebug(text, color);
-			else backend.macros.MacroUtil.print(text);
+			else print(text);
 		}
 	}
 

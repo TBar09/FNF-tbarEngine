@@ -1,8 +1,7 @@
 package;
 
 #if android
-//import android.content.Context;
-import android.Tools;
+import android.content.Context;
 #end
 
 import backend.debug.FPSCounter;
@@ -63,8 +62,7 @@ class Main extends Sprite
 
 		// Credits to MAJigsaw77 (he's the og author for this code)
 		#if android
-		//Sys.setCwd(Path.addTrailingSlash(Context.getExternalFilesDir()));
-		Sys.setCwd(Path.addTrailingSlash(Tools.getExternalStorageDirectory()));
+		Sys.setCwd(Path.addTrailingSlash(Context.getExternalFilesDir()));
 		#elseif ios
 		Sys.setCwd(lime.system.System.applicationStorageDirectory);
 		#end
@@ -97,13 +95,9 @@ class Main extends Sprite
 			game.height = Math.ceil(stageHeight / game.zoom);
 		}
 
-		#if LUA_ALLOWED Lua.set_callbacks_function(cpp.Callable.fromStaticFunction(psychlua.backend.CallbackHandler.call)); #end
-		Controls.instance = new Controls();
-		ClientPrefs.loadDefaultKeys();
+		beforeGameInit();
 
-		#if CHECK_FOR_UPDATES backend.util.OnlineUtil.loadOnlineData(); #end
-		#if ACHIEVEMENTS_ALLOWED Achievements.load(); #end
-
+		/* Game initialization */
 		addChild(new FridayGame(game.width, game.height, Init, #if(flixel < "5.0.0") game.zoom, #end game.framerate, game.framerate, game.skipSplash, game.startFullscreen));
 
 		#if !mobile
@@ -111,9 +105,6 @@ class Main extends Sprite
 		addChild(fpsVar);
 		Lib.current.stage.align = "tl";
 		Lib.current.stage.scaleMode = StageScaleMode.NO_SCALE;
-		if(fpsVar != null) {
-			fpsVar.visible = ClientPrefs.data.showFPS;
-		}
 		#end
 
 		#if linux
@@ -129,9 +120,29 @@ class Main extends Sprite
 		#if(CRASH_HANDLER == "psych")
 		Lib.current.loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, onCrash);
 		#end
+	}
 
-		#if DISCORD_ALLOWED
-		DiscordClient.prepare();
+	static inline function beforeGameInit() {
+		//Custom trace logs
+		backend.system.Log.__log__init__();
+
+		//Lua callback handler
+		#if LUA_ALLOWED
+		Lua.set_callbacks_function(cpp.Callable.fromStaticFunction(psychlua.backend.CallbackHandler.call));
+		#end
+
+		//Controls
+		Controls.init();
+		ClientPrefs.loadDefaultKeys();
+
+		//Online data
+		#if CHECK_FOR_UPDATES
+		backend.util.OnlineUtil.loadOnlineData();
+		#end
+
+		//Achievements
+		#if ACHIEVEMENTS_ALLOWED
+		Achievements.load();
 		#end
 	}
 

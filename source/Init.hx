@@ -9,29 +9,39 @@ import backend.scripts.GlobalScript;
 import backend.util.DiscordClient;
 #end
 
-//Making this extend FlxState instead of MusicBeatState so it doesn't load a menu script of this
-//Edit: Could've just set scriptsAllowed to false
+/*
+ * Making this extend FlxState instead of MusicBeatState so it doesn't load a menu script of this
+ * Edit: Could've just set scriptsAllowed to false
+ */
 class Init extends FlxState {
     override public function create() {
         super.create();
 
+		//Global modpack init
 		#if LUA_ALLOWED
 		Mods.pushGlobalMods();
 		#end
 		Mods.loadTopMod();
+
+		//Global scripts
 		#if(GLOBAL_SCRIPTS && HSCRIPT_ALLOWED && MODS_ALLOWED)
 		if(!GlobalScript.globalScriptActive) GlobalScript.addGlobalScript();
 		#end
-		#if(MODS_ALLOWED && DISCORD_ALLOWED)
+
+		//Discord client
+		#if DISCORD_ALLOWED
+		DiscordClient.prepare();
+		#if MODS_ALLOWED
 		DiscordClient.loadModRPC();
+		#end
 		#end
 
 		FlxG.fixedTimestep = false;
 		FlxG.game.focusLostFramerate = 60;
 		FlxG.keys.preventDefaultKeys = [TAB];
 
-		FlxG.save.bind('funkin', CoolUtil.getSavePath());
-		ClientPrefs.loadPrefs();
+		//Save
+		ClientPrefs.init();
 
 		FlxG.switchState(Type.createInstance(Main.game.initialState, []));
 

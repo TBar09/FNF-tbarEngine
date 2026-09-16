@@ -55,21 +55,21 @@ class HScript implements ScriptInterface {
 		"FlxText" => flixel.text.FlxText,
 
 		//Friday Night Funkin' Classes
-		"Paths" => backend.Paths,
-		"Conductor" => backend.Conductor,
+		"Paths" => backend.system.Paths,
+		"Conductor" => backend.system.Conductor,
 		"PlayState" => states.PlayState,
 		"Boyfriend" => objects.Character, //compatibility
 		"Character" => objects.Character,
 		"CoolUtil"	=> backend.util.CoolUtil,
-		"ClientPrefs" => backend.ClientPrefs,
+		"ClientPrefs" => backend.system.ClientPrefs,
 		"Main" => Main, "Init" => Init, //Base level classes in Psych
 
 		//T-Bar Engine specific classes
 		#if(SOFTCODED_STATES && HSCRIPT_ALLOWED)
 		"ModScriptState" => backend.scripts.ModScriptState,
 		"ModScriptSubstate" => backend.scripts.ModScriptSubstate,
-		"MusicBeatState" => backend.MusicBeatState,
-		"MusicBeatSubstate" => backend.MusicBeatSubstate,
+		"MusicBeatState" => backend.system.MusicBeatState,
+		"MusicBeatSubstate" => backend.system.MusicBeatSubstate,
 		#end
 
 		//away3d specific classes
@@ -278,7 +278,7 @@ class HScript implements ScriptInterface {
 			if(FlxG.state is PlayState)
 				PlayState.instance.addTextToDebug(text, (color == null ? FlxColor.WHITE : color));
 			else #end
-				backend.macros.MacroUtil.print(text);
+				print(text);
 		});
 
 		//other variables

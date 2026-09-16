@@ -1,4 +1,4 @@
-package backend;
+package backend.system;
 
 import flixel.util.FlxSignal.FlxTypedSignal;
 import haxe.Json;

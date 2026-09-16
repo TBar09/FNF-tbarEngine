@@ -1,4 +1,4 @@
-package backend.macros;
+package backend.system.macros;
 
 #if macro
 import haxe.macro.Compiler;
@@ -6,10 +6,7 @@ import haxe.macro.Context;
 import haxe.macro.Expr;
 #end
 
-#if js
-import js.Browser;
-#end
-import haxe.Log;
+import backend.system.Log.print;
 
 class MacroUtil {
 	public static var defines(get, null):Map<String, Dynamic>;
@@ -107,16 +104,6 @@ other haxe versions (haxe 4.3.X is also compatible with compiling).
 
 		//Include additional classes to help with hscript. Comment this out if you want shorten the compile time
 		includeClasses();
-		#end
-	}
-
-	@:dox(hide) public static function print(str:String) {
-		#if js
-		if(Browser.console != null) Browser.console.log(str);
-		#elseif sys
-		Sys.println(str);
-		#else
-		Log.trace(str, null);
 		#end
 	}
 }

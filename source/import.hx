@@ -19,17 +19,18 @@ import flxanimate.*;
 import backend.Achievements;
 #end
 
-import backend.Paths;
-import backend.Controls;
+import backend.system.Mods;
+import backend.system.Paths;
+import backend.system.Controls;
+import backend.system.Conductor;
+import backend.system.ClientPrefs;
+import backend.system.MusicBeatState;
+import backend.system.MusicBeatSubstate;
+
 import backend.util.CoolUtil;
-import backend.MusicBeatState;
-import backend.MusicBeatSubstate;
 import backend.CustomFadeTransition;
-import backend.ClientPrefs;
-import backend.Conductor;
 import backend.BaseStage;
 import backend.Difficulty;
-import backend.Mods;
 
 import objects.Alphabet;
 import objects.BGSprite;
@@ -63,6 +64,8 @@ import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.group.FlxSpriteGroup;
 import flixel.group.FlxGroup.FlxTypedGroup;
+
+import backend.system.Log.*;
 
 using StringTools;
 #end

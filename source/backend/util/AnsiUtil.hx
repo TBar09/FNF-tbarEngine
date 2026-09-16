@@ -1,6 +1,5 @@
 package backend.util;
 
-import backend.macros.MacroUtil;
 import haxe.PosInfos;
 import haxe.Log;
 
@@ -36,7 +35,7 @@ class AnsiUtil {
 
 	inline public static function ansiTrace(str:String, ?haxeTrace:Bool = false, ?posInfos:PosInfos) {
 		if(haxeTrace) Log.trace(formatString(str), posInfos);
-		else MacroUtil.print(formatString(str));
+		else print(formatString(str));
 	}
 
 	public static function consoleColorToInt(color:AnsiColor):Int {

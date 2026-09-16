@@ -613,7 +613,7 @@ class LuaUtils
 	 * Gets the hscript preprocessors for haxe scripts and runHaxeCode
 	 */
 	public static dynamic function getHScriptPreprocessors() {
-		var preprocessors:Map<String, Dynamic> = backend.macros.MacroUtil.defines;
+		var preprocessors:Map<String, Dynamic> = backend.system.macros.MacroUtil.defines;
 		preprocessors.set("TBAR_ENGINE", true);
 		preprocessors.set("TBAR_ENGINE_VER", openfl.Lib.application.meta["version"]);
 		preprocessors.set("BUILD_TARGET", LuaUtils.getBuildTarget());

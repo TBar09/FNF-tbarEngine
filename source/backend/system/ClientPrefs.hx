@@ -1,4 +1,4 @@
-package backend;
+package backend.system;
 
 import flixel.util.FlxSave;
 import flixel.input.keyboard.FlxKey;
@@ -161,6 +161,11 @@ class ClientPrefs {
 		defaultButtons = gamepadBinds.copy();
 	}
 
+	public static inline function init() {
+		FlxG.save.bind('funkin', CoolUtil.getSavePath());
+		ClientPrefs.loadPrefs();
+	}
+
 	public static function saveSettings() {
 		for (key in Reflect.fields(data))
 			Reflect.setField(FlxG.save.data, key, Reflect.field(data, key));
@@ -178,15 +183,17 @@ class ClientPrefs {
 	}
 
 	public static function loadPrefs() {
-		#if ACHIEVEMENTS_ALLOWED Achievements.load(); #end
+		#if ACHIEVEMENTS_ALLOWED
+		Achievements.load();
+		#end
 
-		for (key in Reflect.fields(data))
-			if (key != 'gameplaySettings' && Reflect.hasField(FlxG.save.data, key))
+		for (key in Reflect.fields(data)) {
+			if (key != 'gameplaySettings' && Reflect.hasField(FlxG.save.data, key)) {
 				Reflect.setField(data, key, Reflect.field(FlxG.save.data, key));
-		
-		if(Main.fpsVar != null)
-			Main.fpsVar.visible = data.showFPS;
+			}
+		}
 
+		//Desktop stuff
 		#if (!html5 && !switch)
 		FlxG.autoPause = ClientPrefs.data.autoPause;
 
@@ -195,6 +202,11 @@ class ClientPrefs {
 			data.framerate = Std.int(FlxMath.bound(refreshRate, 60, 240));
 		}
 		#end
+
+		//FPS
+		if(Main.fpsVar != null) {
+			Main.fpsVar.visible = data.showFPS;
+		}
 
 		if(data.framerate > FlxG.drawFramerate)
 		{
@@ -210,15 +222,14 @@ class ClientPrefs {
 		if(FlxG.save.data.gameplaySettings != null)
 		{
 			var savedMap:Map<String, Dynamic> = FlxG.save.data.gameplaySettings;
-			for (name => value in savedMap)
+			for (name => value in savedMap) {
 				data.gameplaySettings.set(name, value);
+			}
 		}
 		
 		// flixel automatically saves your volume!
-		if(FlxG.save.data.volume != null)
-			FlxG.sound.volume = FlxG.save.data.volume;
-		if (FlxG.save.data.mute != null)
-			FlxG.sound.muted = FlxG.save.data.mute;
+		if(FlxG.save.data.volume != null) FlxG.sound.volume = FlxG.save.data.volume;
+		if (FlxG.save.data.mute != null) FlxG.sound.muted = FlxG.save.data.mute;
 
 		#if DISCORD_ALLOWED
 		DiscordClient.check();
@@ -229,18 +240,25 @@ class ClientPrefs {
 		save.bind('controls_v3', CoolUtil.getSavePath());
 		if(save != null)
 		{
+			//Keyboard
 			if(save.data.keyboard != null)
 			{
 				var loadedControls:Map<String, Array<FlxKey>> = save.data.keyboard;
-				for (control => keys in loadedControls)
+				for (control => keys in loadedControls) {
 					if(keyBinds.exists(control)) keyBinds.set(control, keys);
+				}
 			}
+
+			//Controller
 			if(save.data.gamepad != null)
 			{
 				var loadedControls:Map<String, Array<FlxGamepadInputID>> = save.data.gamepad;
-				for (control => keys in loadedControls)
+				for (control => keys in loadedControls) {
 					if(gamepadBinds.exists(control)) gamepadBinds.set(control, keys);
+				}
 			}
+
+			//Sound Volume
 			reloadVolumeKeys();
 		}
 	}
