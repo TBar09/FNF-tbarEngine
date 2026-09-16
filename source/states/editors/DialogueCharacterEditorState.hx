@@ -18,8 +18,9 @@ import objects.TypedAlphabet;
 
 import backend.cutscenes.DialogueBoxPsych;
 import backend.cutscenes.DialogueCharacter;
+import states.editors.backend.EditorState;
 
-class DialogueCharacterEditorState extends MusicBeatState
+class DialogueCharacterEditorState extends EditorState
 {
 	var box:FlxSprite;
 	var daText:TypedAlphabet = null;

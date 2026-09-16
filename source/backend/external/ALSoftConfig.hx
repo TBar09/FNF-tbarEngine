@@ -1,9 +1,9 @@
 package backend.external;
 
 import haxe.io.Path;
-#if(android || ios)
+/* #if(android || ios)
 import lime.system.System;
-#end
+#end */
 
 /*
  * A class that simply points OpenALSoft to a custom configuration file when
@@ -20,8 +20,8 @@ import lime.system.System;
 		var origin:String = Sys.getCwd();
 		#elseif(windows || mac || linux)
 		var origin:String = Sys.programPath();
-		#elseif(android || ios)
-		var origin:String = System.applicationStorageDirectory;
+		//#elseif(android || ios)
+		//var origin:String = System.applicationStorageDirectory;
 		#end
 
 		var configPath:String = Path.directory(Path.withoutExtension(origin));

@@ -7,15 +7,17 @@ import lime.graphics.opengl.GLProgram;
 import sys.io.File;
 import sys.FileSystem;
 #end
-#if (cpp && windows)
+#if(cpp && windows)
 import backend.util.CppAPI;
 #end
 
-#if desktop
 /*
  * An alias to FlxRuntimeShaders / FlxShaders that prints an error log and doesn't crash the game
  * when the shader fails compiling.
  */
+
+#if(cpp && windows)
+@:keep
 class ErrorShader extends FlxShader implements IErrorHandler {
 	public var shaderName:String = '';
 	public dynamic function onError(error:Dynamic):Void {}
@@ -33,13 +35,13 @@ class ErrorShader extends FlxShader implements IErrorHandler {
 			return null;
 		}
 	}
-	
+
 	public static function crashSave(shaderName:String, error:Dynamic, onError:Dynamic) {
 		shaderName = (shaderName == null ? 'unnamed' : shaderName);
 
 		#if (cpp && windows)
 		final ret = CppAPI.makeMessageBox('Error on shader "${shaderName}"!', 'There has been an error compiling this shader!\n\nWould you like to save the shader crash log?', MB_ICONWARNING, MB_YESNO);
-		if(ret == 6) {
+		if(ret == IDYES) {
 			var errMsg:String = "";
 			final dateNow:String = Date.now().toString().replace(" ", "_").replace(":", "'");
 			if (!FileSystem.exists('./crash/')) FileSystem.createDirectory('./crash/');
@@ -48,14 +50,14 @@ class ErrorShader extends FlxShader implements IErrorHandler {
 			File.saveContent(crashLogPath, error);
 			trace('Shader Crashlog saved at "${crashLogPath}"');
 		}
-		#else
+		#elseif sys
 		var errMsg:String = "";
 		final dateNow:String = Date.now().toString().replace(" ", "_").replace(":", "'");
 		if(!FileSystem.exists('./crash/')) FileSystem.createDirectory('./crash/');
 
 		final crashLogPath:String = './crash/shader_${shaderName}_${dateNow}.txt';
 		File.saveContent(crashLogPath, error);
-		FlxG.stage.window.alert('Error log saved at: $crashLogPath', 'Error on shader "${shaderName}"!');
+		CoolUtil.windowAlert('Error on shader "${shaderName}"!', 'Error log saved at: $crashLogPath')
 		#end
 
 		onError(error);

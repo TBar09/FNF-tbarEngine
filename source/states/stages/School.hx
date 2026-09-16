@@ -126,7 +126,7 @@ class School extends BaseStage
 		doof.nextDialogueThing = PlayState.instance.startNextDialogue;
 		doof.skipDialogueThing = PlayState.instance.skipDialogue;
 	}
-	
+
 	function schoolIntro():Void
 	{
 		inCutscene = true;
@@ -138,14 +138,10 @@ class School extends BaseStage
 		{
 			black.alpha -= 0.15;
 
-			if (black.alpha > 0)
-				tmr.reset(0.3);
-			else
-			{
-				if (doof != null)
-					add(doof);
-				else
-					startCountdown();
+			if (black.alpha > 0) tmr.reset(0.3);
+			else {
+				if (doof != null) add(doof);
+				else startCountdown();
 
 				remove(black);
 				black.destroy();

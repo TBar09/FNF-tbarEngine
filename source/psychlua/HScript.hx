@@ -1,9 +1,10 @@
 package psychlua;
 
 #if HSCRIPT_ALLOWED
-import hscript.Expr.Error;
+import hscript.Printer;
+import hscript.Interp;
+import hscript.Parser;
 import hscript.Expr;
-import hscript.*;
 #end
 
 import flixel.FlxG;
@@ -11,30 +12,23 @@ import flixel.FlxBasic;
 import flixel.util.FlxColor;
 import psychlua.LuaUtils;
 import haxe.Log;
-#if LUA_ALLOWED
-import llua.Lua;
-#end
+import psychlua.backend.CustomSubstate;
 
-#if sys
-import sys.io.File;
-import sys.FileSystem;
-#else
-import openfl.utils.Assets;
-#end
+import backend.util.FileUtil;
 
 /*
  * The class that handles haxe scripts. The code was built off some mod's code, so props to them!
  */
 using StringTools;
-interface HscriptInterface {
-    public var scriptName:String;
-    public function set(variable:String, data:Dynamic):Void;
-    public function call(func:String, args:Array<Dynamic>):Dynamic;
-    public function stop():Void;
+
+enum ErrorType {
+	WINDOW;
+	TRACE;
+	NONE;
 }
 
 #if HSCRIPT_ALLOWED
-class HScript implements HscriptInterface {
+class HScript implements ScriptInterface {
 
 	/*
 	 * All the classes pre-imported into every haxe script / runHaxeCode.
@@ -99,7 +93,7 @@ class HScript implements HscriptInterface {
 		"FlxSpriteGroup" => flixel.group.FlxSpriteGroup,
 		"FlxSound" => #if(flixel >= "5.3.0") flixel.sound.FlxSound #else flixel.system.FlxSound #end,
 		#if(flxanimate) "FlxAnimate" => flxanimate.FlxAnimate, #end
-		#if(!flash) "FlxRuntimeShader" => flixel.addons.display.FlxRuntimeShader, #end
+		#if(SHADERS_ALLOWED) "FlxRuntimeShader" => flixel.addons.display.FlxRuntimeShader, #end
 		"ShaderFilter"	=> openfl.filters.ShaderFilter,
 
 		//Abstracts
@@ -119,13 +113,13 @@ class HScript implements HscriptInterface {
     public var expr:Expr;
 
 	public var variables(get, never):Map<String, Dynamic>;
-	public function get_variables() return interp.variables;
+	public inline function get_variables() return interp.variables;
 
     public var scriptName:String;
 	public var modFolder:Null<String>;
 
 	//Scripts attached to this script. You can make some goofy chains with this.
-	public var subScripts:Array<psychlua.HScript> = [];
+	public var subScripts:Array<HScript> = [];
 
 	/**
 	 * Creates a new haxe script instance that runs interpreted haxe code.
@@ -135,9 +129,10 @@ class HScript implements HscriptInterface {
 	 *							`HaxeCode` class for a version supporting code strings.
 	 * @param	_parentClass	The parent state instance this script will be assigned to. 
 	 * @param	_autoRunScript	(This is used internally by `HaxeCode` and is not recommened to use)
-	 * @param  	_ignoreErrors	Whether the script should ignore the critical error popup if an error is found.
+	 * @param  	_errorType		The error process if the interp fails. WINDOW shows a popup, TRACE 
+	 *							traces the error, and NONE is no errors.
 	 */
-    public function new(path:String, ?_parentClass:Dynamic = null, ?_autoRunScript:Bool = true, ?_ignoreErrors:Bool = false) {
+    public function new(path:String, ?parentClass:Dynamic = null, ?_autoRunScript:Bool = true, ?_errorType:ErrorType = WINDOW) {
 		if(!_autoRunScript) return;
 
         if(parser == null) initParser();
@@ -155,12 +150,12 @@ class HScript implements HscriptInterface {
 
 		try {
 			parser.line = 1; //Reset the parser position.
-			expr = parser.parseString(#if sys File.getContent(path) #else Assets.getText(path) #end, path);
+			expr = parser.parseString(FileUtil.getText(path), path);
 
 			interp.variables.set("this", this);
 			for(varToBring => val in classes) interp.variables.set(varToBring, val);
 
-			this.setParent((_parentClass != null ? _parentClass : LuaUtils.getHScriptScriptObject()));
+			this.setParent((parentClass != null ? parentClass : LuaUtils.getHScriptScriptObject()));
 			addHScriptExtras(this.interp, LuaUtils.isPlayStateScript(interp.scriptObject));
 
 			interp.variables.set("getModSetting", function(saveTag:String, ?modName:String = null) {
@@ -177,7 +172,13 @@ class HScript implements HscriptInterface {
 			interp.execute(expr);
 			call("onCreate", []);
 		} catch(e) {
-			if(!_ignoreErrors) FlxG.stage.window.alert('Error on haxe script.\n${e.toString()}', 'Error on Haxe Script!');
+			switch(_errorType) {
+				case WINDOW:
+					CoolUtil.windowAlert('Error on Haxe Script!', 'Error on haxe script.\n${e.toString()}');
+				case TRACE:
+					trace('Error on haxe script: \n${e.toString()}');
+				default:
+			}
 		}
 	}
 
@@ -393,7 +394,7 @@ class HScript implements HscriptInterface {
 	function onImportFailed(cl:Array<String>, classAlias:Null<String>):Bool {
 		if(_librariesAllowed) { //Custom hscript libraries
 			var scriptPath = Paths.getScriptPath("libraries/" + cl.join("/") + Paths.HSCRIPT_EXT, this.modFolder);
-			if(#if sys FileSystem.exists(scriptPath) #else Assets.exists(scriptPath) #end) {
+			if(FileUtil.exists(scriptPath)) {
 				return _includeSubscript(scriptPath, true);
 			}
 		}
@@ -429,14 +430,14 @@ class HScript implements HscriptInterface {
 		return this;
 	}
 
-	public function getScriptParent():Dynamic
+	public inline function getParent():Dynamic
 		return interp.scriptObject;
 
 	function _includeSubscript(path:String, absolute:Bool = false):Bool {
 		var scriptPath = (absolute ? path : Paths.getScriptPath(path, this.modFolder));
 
-		if(#if sys FileSystem.exists(scriptPath) #else Assets.exists(scriptPath) #end) {
-			var hscriptToPush = new HScript(scriptPath, this.getScriptParent(), true, true);
+		if(FileUtil.exists(scriptPath)) {
+			var hscriptToPush = new HScript(scriptPath, this.getParent(), true, TRACE);
 			hscriptToPush.call("onScriptImported", [this]);
 			subScripts.push(hscriptToPush);
 			return true;
@@ -471,16 +472,6 @@ class HScript implements HscriptInterface {
 			case ":ignoreException": this.parser.resumeErrors = true;
 			case ":noDebug": this.interp.errorHandler = (e) -> {};
 			case ":noLibraries": this._librariesAllowed = false;
-
-			/* //Useless
-			case ":allowJSON":
-				switch(args[0].e) {
-					case EIdent(id): this.parser.allowJSON = (id.trim() == "true");
-					default: //nothing
-				}
-				return null;
-			*/
-
 			case ":include": //legacy importScript from older versions
 				var _isAbsolute:Bool = false;
 				if(args.length > 1) _isAbsolute = switch(args[1].e) { case EIdent(abs): (abs.trim() == "true"); default: false; }
@@ -495,6 +486,8 @@ class HScript implements HscriptInterface {
 	}
 
 	//SCRIPT CALLBACKS
+
+	public inline function destroy() this.stop();
 	public function stop() {
 		for(sub in subScripts) {
 			sub.call("onDestroy", []);
@@ -545,7 +538,7 @@ class HaxeCode extends HScript {
 	override public function new(?parent:Dynamic)
 	#end
 	{
-		super(null, null, false, false); //legally forced to put this by the haxe gods
+		super(null, null, false, WINDOW); //legally forced to put this by the haxe gods
 
 		#if HSCRIPT_ALLOWED
 		if(parser == null) this.initParser();
@@ -558,7 +551,7 @@ class HaxeCode extends HScript {
 
 		interp.variables.set('this', this);
 		interp.variables.set('Alphabet', objects.Alphabet);
-		interp.variables.set('CustomSubstate', psychlua.CustomSubstate);
+		interp.variables.set('CustomSubstate', psychlua.backend.CustomSubstate);
 
 		HScript.addHScriptExtras(interp, LuaUtils.isPlayStateScript(interp.scriptObject));
 
@@ -584,7 +577,7 @@ class HaxeCode extends HScript {
 		return interp.execute(parser.parseString(codeToRun, (parentLua != null ? '${parentLua.scriptName}:runHaxeCode' : 'hscript')));
 	}
 
-	public function destroy() {
+	public override function stop() {
 		expr = null;
 		interp = null;
 		parser = null;

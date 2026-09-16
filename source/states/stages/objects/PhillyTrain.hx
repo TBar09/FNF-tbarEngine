@@ -70,7 +70,16 @@ class PhillyTrain extends BGSprite
 			start();
 		}
 	}
-	
+
+	public function pauseResumeAnimation(doPause:Bool) {
+		animation.paused = doPause;
+
+		if(sound != null && sound.playing) {
+			if(doPause) sound.pause();
+			else sound.resume();
+		}
+	}
+
 	public function start():Void
 	{
 		moving = true;

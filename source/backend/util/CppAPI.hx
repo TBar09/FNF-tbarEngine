@@ -7,7 +7,9 @@ import backend.external.CppBackend;
 class CppAPI
 {
 	#if(cpp && (windows || linux))
-	public static function obtainRAM():Int { return CppBackend.obtainRAM(); }
+	public static function obtainRAM():Int {
+		return CppBackend.obtainRAM();
+	}
 	#end
 
 	#if(cpp && windows)
@@ -16,11 +18,13 @@ class CppAPI
 		return lime.system.System.platformLabel.toLowerCase().contains(vers.toLowerCase());
 	}
 
-	public static function setDarkMode()
+	public static inline function setDarkMode() {
 		CppBackend.setWindowColorMode(true);
+	}
 
-	public static function setLightMode()
+	public static inline function setLightMode() {
 		CppBackend.setWindowColorMode(false);
+	}
 
 	public static function setWindowColorMode(isDarkMode:Bool = false, redrawHeader:Bool = false) {
 		CppBackend.setWindowColorMode(isDarkMode);
@@ -34,14 +38,14 @@ class CppAPI
 	}
 
 	public static function setWindowTitleColor(color:Array<Int>) {
-		if(color != null) CppBackend.setWindowBorderColor([color[0], color[1], color[2], color[3]]);
+		if(color != null) CppBackend.setWindowTitleColor([color[0], color[1], color[2], color[3]]);
 		else CppBackend.setWindowTitleColor([-1, -1, -1, -1]);
 	}
 
 	public static function redrawWindowHeader() {
-		for(i in 0...2) {
-			FlxG.stage.window.borderless = !FlxG.stage.window.borderless;
-		}
+		// for(i in 0...2) FlxG.stage.window.borderless = !FlxG.stage.window.borderless;
+		FlxG.stage.window.borderless = !FlxG.stage.window.borderless;
+		FlxG.stage.window.borderless = !FlxG.stage.window.borderless;
 	}
 
 	public static function allocConsole() {
@@ -54,16 +58,17 @@ class CppAPI
 	}
 	#end
 
-	public static function makeMessageBox(title:String, text:String, ?icon:MessageBoxIcon = MB_ICONINFORMATION, ?msgType:MessageBoxType = MB_OK):Int {
+	public static function makeMessageBox(title:String, text:String,
+		?icon:MessageBoxIcon = MB_ICONINFORMATION, ?msgType:MessageBoxType = MB_OK):MessageBoxReturn {
 		#if (cpp && windows)
 		if(title != null && text != null) return CppBackend.makeMessageBox(title, text, icon, msgType);
 		else {
 			trace('Error: "title" or "text" parameter is null.');
-			return 0;
+			return ERROR;
 		}
 		#else
 		FlxG.stage.window.alert(text, title);
-		return 0;
+		return ERROR;
 		#end
 	}
 }
@@ -85,4 +90,17 @@ enum abstract MessageBoxType(Int) {
 	var MB_YESNO = 0x00000004;
 	var MB_YESNOCANCEL = 0x00000003;
 	var MB_OK = 0x00000000;
+}
+
+enum abstract MessageBoxReturn(Int) {
+	var ERROR = 0;
+	var IDOK = 1;
+	var IDCANCEL = 2;
+	var IDABORT = 3;
+	var IDRETRY = 4;
+	var IDIGNORE = 5;
+	var IDYES = 6;
+	var IDNO = 7;
+	var IDTRYAGAIN = 10;
+	var IDCONTINUE = 11;
 }

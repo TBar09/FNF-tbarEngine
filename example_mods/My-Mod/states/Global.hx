@@ -1,4 +1,4 @@
-/**
+/*
  * A global menu script that runs across the whole game until it's corresponding modpack is disabled.
  * It's also important to note that only ONE global script is allowed at a time, and it's usually from the global/topmost modpack.
  */

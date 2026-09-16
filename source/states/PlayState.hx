@@ -32,7 +32,7 @@ import states.editors.CharacterEditorState;
 import substates.PauseSubState;
 import substates.GameOverSubstate;
 
-#if !flash
+#if SHADERS_ALLOWED
 import flixel.addons.display.FlxRuntimeShader;
 import openfl.filters.ShaderFilter;
 #end
@@ -46,12 +46,14 @@ import objects.*;
 import states.stages.objects.*;
 
 #if LUA_ALLOWED
-import psychlua.*;
-import psychlua.ModchartSprite.ModchartBackdrop;
-#else
-import psychlua.LuaUtils;
+import psychlua.objects.ModchartSprite;
+import psychlua.objects.ModchartAnimateSprite;
+import psychlua.FunkinLua;
+#end
+#if HSCRIPT_ALLOWED
 import psychlua.HScript;
 #end
+import psychlua.LuaUtils;
 
 /**
  * This is where all the Gameplay stuff happens and is managed
@@ -254,7 +256,7 @@ class PlayState extends MusicBeatState
 	#end
 
 	#if (LUA_ALLOWED || HSCRIPT_ALLOWED)
-	private var luaDebugGroup:FlxTypedGroup<psychlua.DebugLuaText>;
+	private var luaDebugGroup:FlxTypedGroup<psychlua.backend.DebugLuaText>;
 	#end
 	public var introSoundsSuffix:String = '';
 
@@ -405,7 +407,7 @@ class PlayState extends MusicBeatState
 		add(boyfriendGroup);
 
 		#if (LUA_ALLOWED || HSCRIPT_ALLOWED)
-		luaDebugGroup = new FlxTypedGroup<psychlua.DebugLuaText>();
+		luaDebugGroup = new FlxTypedGroup<psychlua.backend.DebugLuaText>();
 		luaDebugGroup.cameras = [camOther];
 		add(luaDebugGroup);
 		#end
@@ -734,14 +736,14 @@ class PlayState extends MusicBeatState
 
 	#if (LUA_ALLOWED || HSCRIPT_ALLOWED)
 	public function addTextToDebug(text:String, color:FlxColor) {
-		var newText:psychlua.DebugLuaText = luaDebugGroup.recycle(psychlua.DebugLuaText);
+		var newText:psychlua.backend.DebugLuaText = luaDebugGroup.recycle(psychlua.backend.DebugLuaText);
 		newText.text = text;
 		newText.color = color;
 		newText.disableTime = 6;
 		newText.alpha = 1;
 		newText.setPosition(10, 8 - newText.height);
 
-		luaDebugGroup.forEachAlive(function(spr:psychlua.DebugLuaText) {
+		luaDebugGroup.forEachAlive(function(spr:psychlua.backend.DebugLuaText) {
 			spr.y += newText.height + 2;
 		});
 		luaDebugGroup.add(newText);
@@ -3273,7 +3275,7 @@ class PlayState extends MusicBeatState
 		return result;
 	}
 
-	public function callOnLuas(funcToCall:String, args:Array<Dynamic> = null, ignoreStops = false, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
+	public function callOnLuas(funcToCall:String, args:Array<Dynamic> = null, ignoreStops:Bool = false, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
 		var returnVal:Dynamic = LuaUtils.Function_Continue;
 		#if LUA_ALLOWED
 		if(args == null) args = [];
@@ -3312,6 +3314,30 @@ class PlayState extends MusicBeatState
 		return returnVal;
 	}
 
+	public function callOnHScript(event:String, args:Array<Dynamic>, ignoreStops:Bool = false, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
+		var returnVal = LuaUtils.Function_Continue;
+		#if HSCRIPT_ALLOWED
+		if(exclusions == null) exclusions = [];
+		if(excludeValues == null) excludeValues = [];
+
+		for (sc in hscriptArray) {
+			if(exclusions.contains(sc.scriptName)) {
+				continue;
+			}
+
+			var myValue:Dynamic = sc.call(event, args);
+			if(!ignoreStops && (myValue == LuaUtils.Function_StopHScript || myValue == LuaUtils.Function_StopAll)) {
+				break;
+			}
+
+			if(myValue != null && myValue != LuaUtils.Function_Continue && !excludeValues.contains(myValue)) {
+				returnVal = myValue;
+			}
+		}
+		#end
+		return returnVal;
+	}
+	/*
 	public function callOnHScript(event:String, args:Array<Dynamic>, ignoreStops = true, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
 		var returnVal = LuaUtils.Function_Continue;
 		#if HSCRIPT_ALLOWED
@@ -3333,6 +3359,7 @@ class PlayState extends MusicBeatState
 		#end
 		return returnVal;
 	}
+	*/
 
 	public function setOnScripts(variable:String, arg:Dynamic, exclusions:Array<String> = null) {
 		if(exclusions == null) exclusions = [];
@@ -3467,13 +3494,13 @@ class PlayState extends MusicBeatState
 	}
 	#end
 
-	#if (!flash && sys)
+	#if (SHADERS_ALLOWED && sys)
 	public var runtimeShaders:Map<String, Array<String>> = new Map<String, Array<String>>();
 	public function createRuntimeShader(name:String):FlxRuntimeShader
 	{
 		if(!ClientPrefs.data.shaders) return new FlxRuntimeShader();
 
-		#if (!flash && MODS_ALLOWED && sys)
+		#if (SHADERS_ALLOWED && MODS_ALLOWED && sys)
 		if(!runtimeShaders.exists(name) && !initLuaShader(name))
 		{
 			FlxG.log.warn('Shader $name is missing!');
@@ -3492,7 +3519,7 @@ class PlayState extends MusicBeatState
 	{
 		if(!ClientPrefs.data.shaders) return false;
 
-		#if (MODS_ALLOWED && !flash && sys)
+		#if (SHADERS_ALLOWED && MODS_ALLOWED && sys)
 		if(runtimeShaders.exists(name))
 		{
 			FlxG.log.warn('Shader $name was already initialized!');
@@ -3536,4 +3563,27 @@ class PlayState extends MusicBeatState
 		return false;
 	}
 	#end
+
+	/* Variable aliases for commonly mispelled variables */
+
+	public var opponent(get, set):Character;
+	public var bf(get, set):Character;
+	public var girlfriend(get, set):Character;
+
+	public inline function get_opponent():Character { return dad; }
+	public inline function set_opponent(val:Character):Character {
+		dad = val;
+		return dad;
+	}
+	public inline function get_bf():Character { return boyfriend; }
+	public inline function set_bf(val:Character):Character {
+		boyfriend = val;
+		return boyfriend;
+	}
+	public inline function get_girlfriend():Character { return gf; }
+	public inline function set_girlfriend(val:Character):Character {
+		gf = val;
+		return boyfriend;
+	}
+	
 }

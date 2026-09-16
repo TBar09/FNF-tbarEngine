@@ -1,4 +1,4 @@
-package psychlua;
+package psychlua.callbacks;
 
 import flixel.util.FlxSave;
 import openfl.utils.Assets;

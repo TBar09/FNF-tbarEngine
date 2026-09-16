@@ -14,7 +14,9 @@ import haxe.Json;
 
 import objects.MenuCharacter;
 
-class MenuCharacterEditorState extends MusicBeatState
+import states.editors.backend.EditorState;
+
+class MenuCharacterEditorState extends EditorState
 {
 	var grpWeekCharacters:FlxTypedGroup<MenuCharacter>;
 	var characterFile:MenuCharacterFile = null;

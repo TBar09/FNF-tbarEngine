@@ -1,7 +1,7 @@
-package psychlua;
+package psychlua.callbacks;
 
 import flixel.addons.display.FlxBackdrop;
-import psychlua.ModchartSprite.ModchartBackdrop;
+import psychlua.objects.ModchartSprite;
 import substates.GameOverSubstate;
 /*
  * This is simply where i store deprecated functions for it to be more organized.

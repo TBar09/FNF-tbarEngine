@@ -9,8 +9,10 @@ import backend.cutscenes.DialogueCharacter;
 typedef DialogueFile = {
 	var dialogue:Array<DialogueLine>;
 	@:optional var boxImage:String;
+	@:optional var dialogueBox:DialogueTextBox;
 }
 
+// Dialogue lines
 typedef DialogueLine = {
 	var portrait:Null<String>;
 	var expression:Null<String>;
@@ -20,7 +22,24 @@ typedef DialogueLine = {
 	var sound:Null<String>;
 }
 
-// TO DO: Clean code? Maybe? idk
+// Dialogue Boxes
+typedef DialogueTextBox = {
+	var image:String;
+	var animations:Array<DialogueBoxAnimation>;
+	@:optional var scale:Array<Float>;
+	@:optional var size:Array<Float>;
+}
+
+typedef DialogueBoxAnimation = {
+	var name:String;
+	var animName:String;
+	var fps:Int;
+	@:optional var looped:Bool;
+	@:optional var flipX:Bool;
+	@:optional var flipY:Bool;
+}
+
+// TODO: Clean code? Maybe? idk
 class DialogueBoxPsych extends FlxSpriteGroup
 {
 	public static var DEFAULT_TEXT_X = 175;
@@ -72,20 +91,12 @@ class DialogueBoxPsych extends FlxSpriteGroup
 
 		box = new FlxSprite(70, 370);
 		box.antialiasing = ClientPrefs.data.antialiasing;
-		if(dialogueList.boxImage != null && dialogueList.boxImage.length > 0)
-			box.frames = Paths.getSparrowAtlas(dialogueList.boxImage);
-		else box.frames = Paths.getSparrowAtlas('speech_bubble');
+		if(dialogueList.dialogueBox != null) {
+			customDialogueBox(dialogueList.dialogueBox);
+		} else {
+			defaultDialogueBox();
+		}
 
-		box.scrollFactor.set();
-		box.animation.addByPrefix('normal', 'speech bubble normal', 24);
-		box.animation.addByPrefix('normalOpen', 'Speech Bubble Normal Open', 24, false);
-		box.animation.addByPrefix('angry', 'AHH speech bubble', 24);
-		box.animation.addByPrefix('angryOpen', 'speech bubble loud open', 24, false);
-		box.animation.addByPrefix('center-normal', 'speech bubble middle', 24);
-		box.animation.addByPrefix('center-normalOpen', 'Speech Bubble Middle Open', 24, false);
-		box.animation.addByPrefix('center-angry', 'AHH Speech Bubble middle', 24);
-		box.animation.addByPrefix('center-angryOpen', 'speech bubble Middle loud open', 24, false);
-		box.animation.play('normal', true);
 		box.visible = false;
 		box.setGraphicSize(Std.int(box.width * 0.9));
 		box.updateHitbox();
@@ -96,6 +107,47 @@ class DialogueBoxPsych extends FlxSpriteGroup
 		add(daText);
 
 		startNextDialog();
+	}
+
+	// Support for custom boxes
+	inline function customDialogueBox(dialogueData:DialogueTextBox) {
+		box.frames = Paths.getSparrowAtlas(dialogueData.image);
+		if(dialogueData.scale != null) {
+			box.scale.set(dialogueData.scale[0], dialogueData.scale[1]);
+			box.updateHitbox();
+		}
+		if(dialogueData.size != null) {
+			box.setGraphicSize(dialogueData.size[0], dialogueData.size[1]);
+			box.updateHitbox();
+		}
+
+		box.scrollFactor.set();
+		for(anim in dialogueData.animations) {
+			box.animation.addByPrefix(anim.name, // Anim name
+				anim.animName, // Anim name in xml
+				anim.fps, // FPS
+				anim.looped, // Is looped
+				(anim.flipX != null ? anim.flipX : false), // Flip X
+				(anim.flipY != null ? anim.flipY : false) // Flip Y
+			);
+		}
+		box.animation.play('normal', true);
+	}
+
+	// This is for base Psych dialogue files with no special dialogue box
+	inline function defaultDialogueBox() {
+		box.frames = Paths.getSparrowAtlas('speech_bubble');
+		
+		box.scrollFactor.set();
+		box.animation.addByPrefix('normal', 'speech bubble normal', 24);
+		box.animation.addByPrefix('normalOpen', 'Speech Bubble Normal Open', 24, false);
+		box.animation.addByPrefix('angry', 'AHH speech bubble', 24);
+		box.animation.addByPrefix('angryOpen', 'speech bubble loud open', 24, false);
+		box.animation.addByPrefix('center-normal', 'speech bubble middle', 24);
+		box.animation.addByPrefix('center-normalOpen', 'Speech Bubble Middle Open', 24, false);
+		box.animation.addByPrefix('center-angry', 'AHH Speech Bubble middle', 24);
+		box.animation.addByPrefix('center-angryOpen', 'speech bubble Middle loud open', 24, false);
+		box.animation.play('normal', true);
 	}
 
 	var dialogueStarted:Bool = false;

@@ -1,4 +1,4 @@
-package psychlua;
+package psychlua.objects;
 
 import flixel.addons.display.FlxBackdrop;
 import flixel.graphics.FlxGraphic;

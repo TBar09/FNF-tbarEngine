@@ -20,7 +20,7 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 
 		//I'd suggest using "Low Quality" as an example for making your own option since it is the simplest here
 		var option:Option = new Option('Low Quality', //Name
-			'If checked, disables some background details,\ndecreases loading times and improves performance.', //Description
+			'If checked, disables some background details,\ndecreases loading times, and improves performance.', //Description
 			'lowQuality', //Save data variable name
 			'bool'); //Variable type
 		addOption(option);
@@ -33,17 +33,26 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 		addOption(option);
 		antialiasingOption = optionsArray.length-1;
 
-		var option:Option = new Option('Shaders', //Name
-			"If unchecked, disables shaders.\nIt's used for some visual effects, and also CPU intensive for weaker PCs.", //Description
+		var option:Option = new Option('Shaders',
+			"If unchecked, disables shaders.\nIt's used for some visual effects, but also CPU intensive for weaker PCs.",
 			'shaders',
 			'bool');
 		addOption(option);
 
-		var option:Option = new Option('GPU Caching', //Name
-			"If checked, allows the GPU to be used for caching textures, decreasing RAM usage.\nDon't turn this on if you have a shitty Graphics Card.", //Description
+		var option:Option = new Option('GPU Caching',
+			"If checked, allows the GPU to be used for caching textures, decreasing RAM usage.\nDon't turn this on if you have a shitty Graphics Card.",
 			'cacheOnGPU',
 			'bool');
 		addOption(option);
+
+		#if !mobile
+		var option:Option = new Option('FPS Counter',
+			'If unchecked, will hide the FPS Counter.',
+			'showFPS',
+			'bool');
+		addOption(option);
+		option.onChange = onChangeFPSCounter;
+		#end
 
 		#if !html5 //Apparently other framerates isn't correctly supported on Browser? Probably it has some V-Sync shit enabled by default, idk
 		var option:Option = new Option('Show Memory',
@@ -52,7 +61,7 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 			'bool');
 		option.onChange = onChangeMemory; 
 		addOption(option);
-		
+
 		var option:Option = new Option('Framerate',
 			"Pretty self explanatory, isn't it?",
 			'framerate',
@@ -92,8 +101,13 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 		#end
 	}
 
-	function onChangeFramerate()
-	{
+	#if !mobile
+	function onChangeFPSCounter() {
+		if(Main.fpsVar != null) Main.fpsVar.visible = ClientPrefs.data.showFPS;
+	}
+	#end
+
+	function onChangeFramerate() {
 		if(ClientPrefs.data.framerate > FlxG.drawFramerate)
 		{
 			FlxG.updateFramerate = ClientPrefs.data.framerate;

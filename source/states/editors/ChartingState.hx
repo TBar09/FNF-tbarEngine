@@ -39,16 +39,24 @@ import objects.StrumNote;
 import objects.Note;
 import substates.Prompt;
 
-import states.editors.charting.VSliceConverter;
+import states.editors.backend.ChartUtil;
+import states.editors.backend.FileBrowser;
+import states.editors.backend.EditorState;
 
 #if sys
 import flash.media.Sound;
 #end
 
+enum ChartType {
+	VSLICE;
+	CODENAME;
+	LEGACY;
+	FPSPLUS;
+}
+
 @:access(flixel.sound.FlxSound._sound)
 @:access(openfl.media.Sound.__buffer)
-
-class ChartingState extends MusicBeatState
+class ChartingState extends EditorState
 {
 	/* 
 	 * Used for backwards compatibility with 0.1 - 0.3.2 charts;
@@ -92,8 +100,6 @@ class ChartingState extends MusicBeatState
 	var curNoteTypes:Array<String> = [];
 	var undos = [];
 	var redos = [];
-
-	var _file:FileReference;
 
 	var UI_box:FlxUITabMenu;
 
@@ -153,7 +159,6 @@ class ChartingState extends MusicBeatState
 
 	var value1InputText:FlxUIInputText;
 	var value2InputText:FlxUIInputText;
-	var vsliceDifficultyInputText:FlxUIInputText;
 	var currentSongName:String;
 
 	var zoomTxt:FlxText;
@@ -199,16 +204,12 @@ class ChartingState extends MusicBeatState
 
 	#if(CRASH_HANDLER == "tbar")
 	var crashSaveEnabled(default, set):Bool = true;
-	inline function set_crashSaveEnabled(value:Bool):Bool {
-		if(value) {
-			if(!Main.FridayGame.onGameCrash.has(crashSave)) {
-				Main.FridayGame.onGameCrash.add(crashSave);
-			}
-		} else {
-			if(Main.FridayGame.onGameCrash.has(crashSave)) {
-				Main.FridayGame.onGameCrash.remove(crashSave);
-			}
-		}
+	function set_crashSaveEnabled(value:Bool):Bool {
+		if(!Main.FridayGame.onGameCrash.has(crashSave) && value)
+			Main.FridayGame.onGameCrash.add(crashSave);
+		else
+			Main.FridayGame.onGameCrash.remove(crashSave);
+
 		return value;
 	}
 	#end
@@ -260,7 +261,7 @@ class ChartingState extends MusicBeatState
 		waveformSprite = new FlxSprite(GRID_SIZE, 0).makeGraphic(1, 1, 0x00FFFFFF);
 		add(waveformSprite);
 
-		var eventIcon:FlxSprite = new FlxSprite(-GRID_SIZE - 5, -90).loadGraphic(Paths.image('eventArrow'));
+		var eventIcon:FlxSprite = new FlxSprite(-GRID_SIZE - 5, -90).loadGraphic(Paths.image('editors/eventArrow'));
 		eventIcon.antialiasing = ClientPrefs.data.antialiasing;
 		leftIcon = new HealthIcon('bf');
 		rightIcon = new HealthIcon('dad');
@@ -308,7 +309,7 @@ class ChartingState extends MusicBeatState
 		strumLine = new FlxSprite(0, 50).makeGraphic(Std.int(GRID_SIZE * 9), 4);
 		add(strumLine);
 
-		quant = new AttachedSprite('chart_quant','chart_quant');
+		quant = new AttachedSprite('editors/chart_quant','chart_quant');
 		quant.animation.addByPrefix('q','chart_quant',0,false);
 		quant.animation.play('q', true, false, 0);
 		quant.sprTracker = strumLine;
@@ -336,6 +337,7 @@ class ChartingState extends MusicBeatState
 
 		var tabs = [
 			{name: "Song", label: 'Song'},
+			#if moonchart {name: "File", label: "File"}, #end
 			{name: "Section", label: 'Section'},
 			{name: "Note", label: 'Note'},
 			{name: "Events", label: 'Events'},
@@ -345,41 +347,42 @@ class ChartingState extends MusicBeatState
 
 		UI_box = new FlxUITabMenu(null, tabs, true);
 
-		UI_box.resize(300, 400);
+		UI_box.resize(#if moonchart 340 #else 300 #end, 400);
 		UI_box.x = 640 + GRID_SIZE / 2;
 		UI_box.y = 25;
 		UI_box.scrollFactor.set();
 
-		text =
-		"W/S or Mouse Wheel - Change Conductor's strum time.
-		A/D - Go to the previous/next section.
-		Left/Right - Change Snap.
-		Up/Down - Change Conductor's Strum Time with Snapping." +
-		#if FLX_PITCH
-		"\nLeft Bracket / Right Bracket - Change Song Playback Rate (SHIFT to go Faster).
-		ALT + Left Bracket / Right Bracket - Reset Song Playback Rate.\n" +
-		#end
-		"Hold Shift to move 4x faster.
-		Hold Control and click on an arrow to select it.
-		Hold Control and press S to save your chart.
-		Z/X - Zoom in/out.
-		\n
-		Esc - Test your chart inside Chart Editor.
-		Enter - Play your chart.
-		Q/E - Decrease/Increase Note Sustain Length.
-		Space - Stop/Resume song.";
+		bpmTxt.x = UI_box.x + UI_box.width + 10;
 
-		var tipTextArray:Array<String> = text.split('\n');
-		for (i in 0...tipTextArray.length) {
-			var tipText:FlxText = new FlxText(UI_box.x, UI_box.y + UI_box.height + 8, 0, tipTextArray[i], 16);
-			tipText.y += i * 12;
-			tipText.setFormat(Paths.font("vcr.ttf"), 14, FlxColor.WHITE, LEFT/*, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK*/);
-			//tipText.borderSize = 2;
-			tipText.scrollFactor.set();
-			add(tipText);
-		}
+		text =
+		"[W]/[S] or Mouse Wheel - Change Conductor's strum time.
+		[A]/[D] - Go to the previous/next section.
+		[Left]/[Right] - Change Snap.
+		[Up]/[Down] - Change Conductor's Strum Time with Snapping." +
+		#if FLX_PITCH
+		"\nLeft Bracket / Right Bracket - Change Song Playback Rate.
+		[Alt] + Left Bracket / Right Bracket - Reset Song Playback Rate.\n" +
+		#end
+		"Hold [Shift] to move 4x faster.
+		Hold [Ctrl] and click on an arrow to select it.
+		Hold [Ctrl] and press [S] to save your chart.
+		[Z]/[X] - Zoom in/out.
+		\n
+		[Esc] - Test your chart inside Chart Editor.
+		[Enter] - Play your chart.
+		[Q]/[E] - Decrease/Increase Note Sustain Length.
+		[Space] - Stop/Resume song.";
+
+		var tipText:FlxText = new FlxText(UI_box.x, UI_box.y + UI_box.height + 8, 0, text, 16);
+		tipText.setFormat(Paths.font("vcr.ttf"), 14, FlxColor.WHITE, LEFT);
+		tipText.scrollFactor.set();
+		add(tipText);
+
 		add(UI_box);
 
+		#if moonchart
+		addFileUI();
+		#end
 		addSongUI();
 		addSectionUI();
 		addNoteUI();
@@ -401,7 +404,8 @@ class ChartingState extends MusicBeatState
 		}
 		lastSong = currentSongName;
 
-		zoomTxt = new FlxText(10, 10, 0, "Zoom: 1 / 1", 16);
+		
+		zoomTxt = new FlxText(10, (Main.fpsVar != null && Main.fpsVar.visible ? Main.fpsVar.height + 2 : 10), 0, "Zoom: 1 / 1", 16);
 		zoomTxt.scrollFactor.set();
 		add(zoomTxt);
 
@@ -528,6 +532,168 @@ class ChartingState extends MusicBeatState
 		#end
 	}
 
+	#if moonchart
+	var saveAsTxt:FlxText;
+	var asVSliceButton:FlxButton;
+	var asCNEButton:FlxButton;
+	var asFPSButton:FlxButton;
+	var asLegacyButton:FlxButton;
+
+	var loadFromTxt:FlxText;
+	var fromVSliceButton:FlxButton;
+	var fromCNEButton:FlxButton;
+	var fromFPSButton:FlxButton;
+	var fromLegacyButton:FlxButton;
+	function addFileUI():Void {
+		var tab_group_file = new FlxUI(null, UI_box);
+		tab_group_file.name = "File";
+		UI_box.addGroup(tab_group_file);
+
+		saveAsTxt = new FlxText(10, 20, 0, "Save Chart As:");
+		asVSliceButton = new FlxButton(saveAsTxt.x, saveAsTxt.y + 30, "VSlice", function() {
+			saveLevelAs(VSLICE);
+		});
+		asCNEButton = new FlxButton(asVSliceButton.x, asVSliceButton.y + 30, "Codename", function() {
+			saveLevelAs(CODENAME);
+		});
+		asFPSButton = new FlxButton(asCNEButton.x, asCNEButton.y + 30, "FPS Plus", function() {
+			saveLevelAs(FPSPLUS);
+		});
+		asLegacyButton = new FlxButton(asFPSButton.x, asFPSButton.y + 30, "Legacy FNF", function() {
+			saveLevelAs(LEGACY);
+		});
+
+		loadFromTxt = new FlxText(UI_box.width/2, 20, 0, "Load Chart From:");
+		fromVSliceButton = new FlxButton(loadFromTxt.x, loadFromTxt.y + 30, "VSlice", function() {
+			loadLevelFrom(VSLICE, true);
+		});
+		fromCNEButton = new FlxButton(fromVSliceButton.x, fromVSliceButton.y + 30, "Codename", function() {
+			loadLevelFrom(CODENAME, true);
+		});
+		fromFPSButton = new FlxButton(fromCNEButton.x, fromCNEButton.y + 30, "FPS Plus", function() {
+			loadLevelFrom(FPSPLUS, false);
+		});
+		fromLegacyButton = new FlxButton(fromFPSButton.x, fromFPSButton.y + 30, "Legacy FNF", function() {
+			loadLevelFrom(LEGACY, false);
+		});
+
+		for(i in 1...5) {
+			var engineIcon:FlxSprite = new FlxSprite(loadFromTxt.x + fromVSliceButton.width + 20, saveAsTxt.y + (30*i));
+			engineIcon.loadGraphic(Paths.image('editors/chart-icons'), true, 20, 20);
+			engineIcon.animation.add("idle", [i-1], 1, true);
+			engineIcon.animation.play("idle");
+			tab_group_file.add(engineIcon);
+		}
+
+		tab_group_file.add(saveAsTxt);
+		tab_group_file.add(asVSliceButton);
+		tab_group_file.add(asCNEButton);
+		tab_group_file.add(asFPSButton);
+		tab_group_file.add(asLegacyButton);
+
+		tab_group_file.add(loadFromTxt);
+		tab_group_file.add(fromVSliceButton);
+		tab_group_file.add(fromCNEButton);
+		tab_group_file.add(fromFPSButton);
+		tab_group_file.add(fromLegacyButton);
+	}
+
+	public static final supportedImportTypes:Array<FileTypeFilter> = [
+		{fileTypeName: "JSON files", fileType: "*.json"}, //Everything else
+		{fileTypeName: "PNG files", fileType: "*.png"}, //Ludum Dare
+		{fileTypeName: "Chart files", fileType: "*.chart"}, //Guitar Hero
+		{fileTypeName: "Osu! Mania files", fileType: "*.osu"}, //Osu! Mania
+		{fileTypeName: "Quaver files", fileType: "*.qua"}, //Quaver
+		{fileTypeName: "StepMania files", fileType: "*.sm"}, //Step Mania
+		{fileTypeName: "StepManiaShark files", fileType: "*.ssc"}, //Step Mania Shark
+		{fileTypeName: "Midi files", fileType: "*.mid"} //Midi
+	];
+
+	var __current_chart_data:Null<String>;
+	var __current_chart_metadata:Null<String>;
+	public function loadLevelFrom(type:ChartType, ?hasMetadata:Bool = false) {
+		var _fileBrowse = new FileBrowse();
+		_fileBrowse.onComplete = function(fileContents, fileName) {
+			var engineChart = null;
+
+			//If it's a chart that needs metadata, then make another box
+			if(hasMetadata) {
+				__current_chart_data = fileContents.trim();
+				var _fileBrowse = new FileBrowse();
+				_fileBrowse.onComplete = function(metadataContents, metadataFileName) {
+					__current_chart_metadata = metadataContents.trim();
+					var engineChart = null;
+
+					switch(type) {
+						case VSLICE:
+							engineChart = ChartUtil.convertFromVSlice(__current_chart_data, __current_chart_metadata, Paths.formatToSongPath(Difficulty.getString()));
+						case CODENAME:
+							engineChart = ChartUtil.convertFromCodename(__current_chart_data, __current_chart_metadata, Paths.formatToSongPath(Difficulty.getString()));
+						default:
+							engineChart = null;
+					}
+
+					_fileBrowse = null;
+					if(engineChart == null) return;
+
+					var runChart = Song.loadFromJson(engineChart.data, PlayState.SONG.song, true);
+					reloadWithChart(runChart, null);
+				}
+				_fileBrowse.start(supportedImportTypes, "Select a Chart Metadata File");
+				return;
+			}
+
+			switch(type) {
+				case FPSPLUS:
+					__current_chart_metadata = null;
+					engineChart = ChartUtil.convertFromFPSPlus(__current_chart_data, Paths.formatToSongPath(Difficulty.getString()));
+				case LEGACY:
+					__current_chart_metadata = null;
+					engineChart = ChartUtil.convertFromLegacy(__current_chart_data, Paths.formatToSongPath(Difficulty.getString()));
+				default:
+					engineChart = null;
+			}
+
+			_fileBrowse = null;
+			if(engineChart == null) return;
+
+			var runChart = Song.loadFromJson(engineChart.data, PlayState.SONG.song, true);
+			reloadWithChart(runChart, null);
+		};
+		_fileBrowse.start(supportedImportTypes, (hasMetadata ? "Select a Chart Data File" : "Select a Chart File"));
+	}
+
+	inline function reloadWithChart(data:Dynamic, ?meta:Dynamic) {
+		PlayState.SONG = data;
+		MusicBeatState.resetState();
+	}
+
+	public function saveLevelAs(type:ChartType) {
+		if(_song.events != null && _song.events.length > 1) _song.events.sort(sortByTime);
+		var json = {"song": _song};
+
+		var data:String = haxe.Json.stringify(json);
+		if(data != null && data.length > 0) {
+			var _folderBrowse:FolderBrowse = new FolderBrowse();
+			_folderBrowse.onComplete = function(path) {
+				if(path == null) return;
+
+				switch(type) {
+					case VSLICE:
+						ChartUtil.convertToVSlice(Paths.formatToSongPath(_song.song), data.trim(), path, Paths.formatToSongPath(Difficulty.getString()));
+					case CODENAME:
+						ChartUtil.convertToCodename(Paths.formatToSongPath(_song.song), data.trim(), path, Paths.formatToSongPath(Difficulty.getString()));
+					case FPSPLUS:
+						ChartUtil.convertToFPSPlus(Paths.formatToSongPath(_song.song), data.trim(), path, Paths.formatToSongPath(Difficulty.getString()));
+					case LEGACY:
+						ChartUtil.convertToLegacy(Paths.formatToSongPath(_song.song), data.trim(), path, Paths.formatToSongPath(Difficulty.getString()));
+				}
+			};
+			_folderBrowse.start("Select an Export Folder");
+		}
+	}
+	#end
+
 	var check_mute_inst:FlxUICheckBox = null;
 	var check_mute_vocals:FlxUICheckBox = null;
 	var check_mute_vocals_opponent:FlxUICheckBox = null;
@@ -560,7 +726,7 @@ class ChartingState extends MusicBeatState
 		saveButton.color = FlxColor.GREEN;
 		saveButton.label.color = FlxColor.WHITE;
 
-		var reloadSong:FlxButton = new FlxButton(saveButton.x + 90, saveButton.y, "Reload Audio", function() {
+		var reloadSong:FlxButton = new FlxButton(#if moonchart 240 #else 210 #end, saveButton.y, "Reload Audio", function() {
 			currentSongName = Paths.formatToSongPath(UI_songTitle.text);
 			updateJsonData();
 			loadSong();
@@ -600,37 +766,19 @@ class ChartingState extends MusicBeatState
 			}
 		});
 
-		var loadVSlice:FlxButton = new FlxButton(loadAutosaveBtn.x, loadAutosaveBtn.y + 280, 'Load VSlice', function()
-		{
-			openSubState(new Prompt('WARNING: The converted chart from VSlice may have anomolies! Please make sure to check the chart before saving!\n(You will first choose a vslice chart, then the a vslice metadata json)', 0, function() {
-				if(!ignoreWarnings) {
-					openSubState(new Prompt('This action will clear current progress.\n\nProceed?', 0, function() {
-						loadVSliceJson();
-					},
-					null, ignoreWarnings));
-				} else {
-					loadVSliceJson();
-				}
-			},
-			null, ignoreWarnings, null, null, {textSize: 11, textYOffset: 13}));
-		});
-
-		vsliceDifficultyInputText = new FlxUIInputText(loadVSlice.x - 130, loadVSlice.y + 3, 100, "normal");
-		blockPressWhileTypingOn.push(vsliceDifficultyInputText);
-
 		var saveEvents:FlxButton = new FlxButton(110, reloadSongJson.y, 'Save Events', function () {
 			saveEvents();
 		});
 		saveEvents.color = FlxColor.GREEN;
 		saveEvents.label.color = FlxColor.WHITE;
 
-		var clear_events:FlxButton = new FlxButton(320, 310, 'Clear events', function() {
+		var clear_events:FlxButton = new FlxButton(#if moonchart 340 #else 300 #end, 310, 'Clear events', function() {
 			openSubState(new Prompt('This action will clear current progress.\n\nProceed?', 0, clearEvents, null,ignoreWarnings));
 		});
 		clear_events.color = FlxColor.RED;
 		clear_events.label.color = FlxColor.WHITE;
 
-		var clear_notes:FlxButton = new FlxButton(320, clear_events.y + 30, 'Clear notes', function()
+		var clear_notes:FlxButton = new FlxButton(clear_events.x, clear_events.y + 30, 'Clear notes', function()
 		{
 			openSubState(new Prompt('This action will clear current progress.\n\nProceed?', 0, function(){
 				for (sec in 0..._song.notes.length) {
@@ -684,7 +832,7 @@ class ChartingState extends MusicBeatState
 		var stages:Array<String> = addStagesToList();
 		if(stages.length < 1) stages.push('stage');
 
-		stageDropDown = new FlxUIDropDownMenu(player1DropDown.x + 140, player1DropDown.y, FlxUIDropDownMenu.makeStrIdLabelArray(stages, true), function(character:String)
+		stageDropDown = new FlxUIDropDownMenu(#if moonchart 205 #else 160 #end, player1DropDown.y, FlxUIDropDownMenu.makeStrIdLabelArray(stages, true), function(character:String)
 		{
 			_song.stage = stages[Std.parseInt(character)];
 		});
@@ -694,10 +842,6 @@ class ChartingState extends MusicBeatState
 		var tab_group_song = new FlxUI(null, UI_box);
 		tab_group_song.name = "Song";
 		tab_group_song.add(UI_songTitle);
-
-		tab_group_song.add(new FlxText(vsliceDifficultyInputText.x, vsliceDifficultyInputText.y - 16, 0, "VSlice Difficulty:"));
-		tab_group_song.add(vsliceDifficultyInputText);
-		tab_group_song.add(loadVSlice);
 
 		tab_group_song.add(check_voices);
 		tab_group_song.add(clear_events);
@@ -2825,9 +2969,10 @@ class ChartingState extends MusicBeatState
 		{
 			// get last bpm
 			var daBPM:Float = _song.bpm;
-			for (i in 0...curSec)
-				if (_song.notes[i].changeBPM)
+			for(i in 0...curSec) {
+				if(_song.notes[i].changeBPM)
 					daBPM = _song.notes[i].bpm;
+			}
 			Conductor.bpm = daBPM;
 		}
 
@@ -2931,7 +3076,7 @@ class ChartingState extends MusicBeatState
 			note.sustainLength = daSus;
 			note.noteType = i[3];
 		} else { //Event note
-			note.loadGraphic(Paths.image('eventArrow'));
+			note.loadGraphic(Paths.image('editors/eventArrow'));
 			note.rgbShader.enabled = false;
 			note.eventName = getEventName(i[1]);
 			note.eventLength = i[1].length;
@@ -3255,8 +3400,7 @@ class ChartingState extends MusicBeatState
 		var json = {"song": _song};
 
 		var data:String = haxe.Json.stringify(json, "\t");
-
-		if((data != null) && (data.length > 0)) {
+		if(data != null && data.length > 0) {
 			#if sys
 			var dateNow:String = Date.now().toString();
 			dateNow = dateNow.replace(" ", "_");
@@ -3265,33 +3409,23 @@ class ChartingState extends MusicBeatState
 			if (!FileSystem.exists("./backup_charts/")) FileSystem.createDirectory("./backup_charts/");
 			File.saveContent('./backup_charts/' + Paths.formatToSongPath(_song.song) + '_TBarEngine_' + dateNow + '.json', data.trim());
 			#else
-				#if debug 
-				FlxG.log.notice("System class not available on this target!");
-				#else
-				trace("System class not available on this target!");
-				#end
+			FlxG.log.notice("System class not available on this target!");
 			#end
 		} else {
 			trace("Can't save backup chart!");
 			return;
 		}
 
-		#if debug
 		FlxG.log.notice("Successfully saved backup chart in backup_charts folder!");
-		#else
-		trace("Successfully saved backup chart in backup_charts folder!");
-		#end
 	}
 
+	var _file:FileReference;
 	private function saveLevel()
 	{
 		if(_song.events != null && _song.events.length > 1) _song.events.sort(sortByTime);
-		var json = {
-			"song": _song
-		};
+		var json = {"song": _song};
 
 		var data:String = haxe.Json.stringify(json, "\t");
-
 		if ((data != null) && (data.length > 0))
 		{
 			_file = new FileReference();
@@ -3306,129 +3440,14 @@ class ChartingState extends MusicBeatState
 	{
 		return FlxSort.byValues(FlxSort.ASCENDING, Obj1[0], Obj2[0]);
 	}
-	
-	/* Vslice Chart Stuff */
-	
-	var __vslice_metadata:VSliceMetadata;
-	var __vslice_chart:VSliceChart;
-	private function loadVSliceJson() {
-		try {
-			_file = new FileReference();
-			_file.addEventListener(Event.SELECT, on_load_vslice);
-			_file.browse([new FileFilter("VSlice Chart file", "*.json")]);
-			return true;
-		} catch(e) {
-			trace("Error loading VSlice Chart: " + Std.string(e));
-		}
-		return false;
-	}
-
-	function onLoadVSliceMetadata(_):Void {
-		try {
-			__vslice_metadata = #if tjson tjson.TJSON.parse(_file.data.toString()) #else Json.parse(_file.data.toString()) #end;
-			//Clear Notes...
-			for (sec in 0..._song.notes.length) {
-				_song.notes[sec].sectionNotes = [];
-			}
-
-			//...then clear events...
-			clearEvents();
-			updateGrid();
-
-			//Then load the VSlice chart
-			var vslice_psych_pack:PsychPackage = VSliceConverter.convertToPsych(__vslice_chart, __vslice_metadata);
-			var vslice_psych_curdifficulty = null;
-
-			if(vsliceDifficultyInputText != null && vsliceDifficultyInputText.text.length > 0 && vslice_psych_pack.difficulties.exists(vsliceDifficultyInputText.text)) {
-				vslice_psych_curdifficulty = vslice_psych_pack.difficulties.get(vsliceDifficultyInputText.text);
-			} else if(vslice_psych_pack.difficulties.exists("normal")) {
-				vslice_psych_curdifficulty = vslice_psych_pack.difficulties.get("normal");
-			} else {
-				trace("Error loading VSlice Chart: Difficulty \"" + vsliceDifficultyInputText.text + "\" & \"normal\" does not exist!");
-				return;
-			}
-
-			/*
-			 * Thanks to @LarryFrosty for the Psych 1.0 to Legacy Psych conversion code.
-			 * TODO: Turn this into a separate converter?
-			 */
-			for(section in vslice_psych_curdifficulty.notes) {
-				if(section.sectionNotes != null && section.sectionNotes.length != 0) {
-					for(notes in section.sectionNotes) {
-						if(!section.mustHitSection) {
-							if (notes[1] > 3) {
-								notes[1] = notes[1] % 4;
-							} else {
-								notes[1] += 4;
-							}
-						}
-					}
-				}
-			}
-			PlayState.SONG = vslice_psych_curdifficulty;
-
-			/*
-			 * Load the VSlice events
-			 * TODO: Fix "null obj ref" error here
-			 */
-			try {
-				if(vslice_psych_pack.events != null && vslice_psych_pack.events.events != null && vslice_psych_pack.events.events.length > 0)
-					PlayState.SONG.events = vslice_psych_pack.events.events;
-			} catch(e) {
-				trace("Error loading VSlice Events: " + Std.string(e));
-			}
-			//changeSection(curSec);
-
-			_file.removeEventListener(Event.SELECT, on_load_vslice);
-			_file.removeEventListener(Event.COMPLETE, onLoadVSlice);
-			_file = null;
-
-			MusicBeatState.resetState();
-		} catch(e) {
-			trace("Error loading VSlice Chart: " + Std.string(e));
-		}
-	}
-
-	function onLoadVSlice(_):Void {
-		try {
-			__vslice_chart = #if tjson tjson.TJSON.parse(_file.data.toString()) #else Json.parse(_file.data.toString()) #end;
-			_file.removeEventListener(Event.SELECT, on_load_vslice);
-			_file.removeEventListener(Event.COMPLETE, onLoadVSlice);
-			_file = null;
-
-			_file = new FileReference();
-			_file.addEventListener(Event.SELECT, on_load_vslice_metadata);
-			_file.browse([new FileFilter("VSlice Metadata file", "*.json")]);
-			return;
-		} catch(e) {
-			trace("Error loading VSlice Chart: " + Std.string(e));
-		}
-	}
-
-	function on_load_vslice_metadata(_):Void {
-		_file.addEventListener(Event.COMPLETE, onLoadVSliceMetadata);
-		_file.load();
-	}
-	function on_load_vslice(_):Void
-	{
-		_file.addEventListener(Event.COMPLETE, onLoadVSlice);
-		_file.load();
-	}
-	
-	//
 
 	private function saveEvents()
 	{
 		if(_song.events != null && _song.events.length > 1) _song.events.sort(sortByTime);
-		var eventsSong:Dynamic = {
-			events: _song.events
-		};
-		var json = {
-			"song": eventsSong
-		}
+		var eventsSong:Dynamic = {events: _song.events};
+		var json = {"song": eventsSong}
 
 		var data:String = haxe.Json.stringify(json, "\t");
-
 		if ((data != null) && (data.length > 0))
 		{
 			_file = new FileReference();
@@ -3441,7 +3460,7 @@ class ChartingState extends MusicBeatState
 
 	function onSaveComplete(_):Void
 	{
-		_file.removeEventListener(Event.COMPLETE, onSaveComplete);
+		_file.removeEventListener(#if desktop Event.SELECT #else Event.COMPLETE #end, onSaveComplete);
 		_file.removeEventListener(Event.CANCEL, onSaveCancel);
 		_file.removeEventListener(IOErrorEvent.IO_ERROR, onSaveError);
 		_file = null;
@@ -3453,7 +3472,7 @@ class ChartingState extends MusicBeatState
 	 */
 	function onSaveCancel(_):Void
 	{
-		_file.removeEventListener(Event.COMPLETE, onSaveComplete);
+		_file.removeEventListener(#if desktop Event.SELECT #else Event.COMPLETE #end, onSaveComplete);
 		_file.removeEventListener(Event.CANCEL, onSaveCancel);
 		_file.removeEventListener(IOErrorEvent.IO_ERROR, onSaveError);
 		_file = null;
@@ -3464,7 +3483,7 @@ class ChartingState extends MusicBeatState
 	 */
 	function onSaveError(_):Void
 	{
-		_file.removeEventListener(Event.COMPLETE, onSaveComplete);
+		_file.removeEventListener(#if desktop Event.SELECT #else Event.COMPLETE #end, onSaveComplete);
 		_file.removeEventListener(Event.CANCEL, onSaveCancel);
 		_file.removeEventListener(IOErrorEvent.IO_ERROR, onSaveError);
 		_file = null;

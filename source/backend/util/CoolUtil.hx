@@ -2,6 +2,10 @@ package backend.util;
 
 import openfl.utils.Assets;
 import lime.utils.Assets as LimeAssets;
+#if hl
+import hl.UI;
+import haxe.EnumFlags;
+#end
 
 class CoolUtil
 {
@@ -18,6 +22,9 @@ class CoolUtil
 	inline public static function capitalize(text:String)
 		return text.charAt(0).toUpperCase() + text.substr(1).toLowerCase();
 
+	/*
+	 * Gets the data from a text file specified by `path` & is split between "\n".
+	 */
 	inline public static function coolTextFile(path:String):Array<String>
 	{
 		var daList:String = null;
@@ -31,6 +38,9 @@ class CoolUtil
 		return daList != null ? listFromString(daList) : [];
 	}
 
+	/*
+	 * Gets a color from a string. Example: "0xFF00FF00"
+	 */
 	inline public static function colorFromString(color:String):FlxColor {
 		var hideChars = ~/[\t\n\r]/;
 		var color:String = hideChars.split(color).join('').trim();
@@ -73,7 +83,7 @@ class CoolUtil
 	}
 
 	/*
-	 *
+	 * Gets the most frequent color of `sprite`.
 	 */
 	public static function dominantColor(sprite:flixel.FlxSprite):Int
 	{
@@ -103,9 +113,33 @@ class CoolUtil
 		return maxKey;
 	}
 
+	/*
+	 * Creates an array of integers from `min` to `max`.
+	 */
 	inline public static function numberArray(max:Int, ?min = 0):Array<Int>
 		return [for (i in min...max) i];
 
+
+	/**
+		Helper Function to Fix Save Files for Flixel 5
+
+		-- EDIT: [November 29, 2023] --
+
+		this function is used to get the save path, period.
+		since newer flixel versions are being enforced anyways.
+		@crowplexus
+	**/
+	@:access(flixel.util.FlxSave.validate)
+	inline public static function getSavePath():String {
+		final company:String = FlxG.stage.application.meta.get('company');
+		// #if (flixel < "5.0.0") return company; #else
+		return '${company}/${flixel.util.FlxSave.validate(FlxG.stage.application.meta.get('file'))}';
+		// #end
+	}
+	
+	/*
+	 * Loads up a browser tab to `site`.
+	 */
 	inline public static function browserLoad(site:String) {
 		#if linux
 		Sys.command('/usr/bin/xdg-open', [site]);
@@ -114,6 +148,11 @@ class CoolUtil
 		#end
 	}
 
+	/*
+	 * Opens up a folder in File Explorer.
+	 * @param	folder		The folder to open, starting from the executable directory.
+	 * @param	absolute	Whether to use an absolute path for `folder`.
+	 */
 	inline public static function openFolder(folder:String, absolute:Bool = false) {
 		#if sys
 			if(!absolute) folder =  Sys.getCwd() + '$folder';
@@ -133,23 +172,31 @@ class CoolUtil
 		#end
 	}
 
-	/**
-		Helper Function to Fix Save Files for Flixel 5
-
-		-- EDIT: [November 29, 2023] --
-
-		this function is used to get the save path, period.
-		since newer flixel versions are being enforced anyways.
-		@crowplexus
-	**/
-	@:access(flixel.util.FlxSave.validate)
-	inline public static function getSavePath():String {
-		final company:String = FlxG.stage.application.meta.get('company');
-		// #if (flixel < "5.0.0") return company; #else
-		return '${company}/${flixel.util.FlxSave.validate(FlxG.stage.application.meta.get('file'))}';
-		// #end
+	/*
+	 * Window dialog box.
+	 * @param	title		The title at the top of the window box.
+	 * @param	body		The text inside of the window box.
+	 */
+	inline public static function windowAlert(title:String, body:String) {
+		#if hl
+		UI.dialog(title, body, new EnumFlags<DialogFlags>());
+		#else
+		FlxG.stage.window.alert(body, title);
+		#end
 	}
 
+	/* Misc Stuff */
+
+	/*
+	 * Returns the name of a class with no packages. Example: "backend.util.CoolUtil" becomes "CoolUtil".
+	 */
+	inline public static function getStateName(classInstance:Dynamic) {
+		if(classInstance == null) return null;
+		var classStr = (Type.getClassName(Type.getClass(classInstance))).split('.');
+		return classStr[classStr.length-1];
+	}
+
+	/* (DEPRECATED) */
 	public static function setTextBorderFromString(text:FlxText, border:String) {
 		switch(border.toLowerCase().trim()) {
 			case 'shadow': text.borderStyle = SHADOW;
@@ -159,12 +206,7 @@ class CoolUtil
 		}
 	}
 
-	inline public static function getStateName(classInstance:Dynamic) {
-		if(classInstance == null) return null;
-		var classStr = (Type.getClassName(Type.getClass(classInstance))).split('.');
-		return classStr[classStr.length-1];
-	}
-
+	/* HTML5 Left overs */
 	#if html5
 	public static function safeSetProperty(obj:Dynamic, prop:String, newValue:Dynamic) {
 		if(Reflect.getProperty(obj, prop) != null)

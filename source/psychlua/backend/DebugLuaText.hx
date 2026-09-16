@@ -1,4 +1,4 @@
-package psychlua;
+package psychlua.backend;
 
 class DebugLuaText extends FlxText
 {

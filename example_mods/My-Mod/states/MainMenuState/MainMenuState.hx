@@ -1,4 +1,4 @@
-/**
+/*
  * A menu script that runs on the Main menu.
  */
 

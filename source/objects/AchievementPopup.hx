@@ -13,6 +13,7 @@ class AchievementPopup extends openfl.display.Sprite {
 	public function new(achieve:String, onFinish:Void->Void)
 	{
 		super();
+		this.onFinish = onFinish;
 
 		// bg
 		graphics.beginFill(FlxColor.BLACK);
@@ -149,6 +150,7 @@ class AchievementPopup extends openfl.display.Sprite {
 
 	public function destroy()
 	{
+		if(onFinish != null) onFinish();
 		Achievements._popups.remove(this);
 		//trace('destroyed achievement, new count: ' + Achievements._popups.length);
 

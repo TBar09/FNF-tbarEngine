@@ -71,11 +71,11 @@ class Commands {
 				if(lib.name == null) return;
 				switch(lib.type) {
 					case "haxelib": //standard haxelib
-						//Sys.command('haxelib install ${lib.name} ' + (lib.version != null ? lib.version : "") + ' --skip-dependencies');
-						CommandUtil.print('haxelib install ${lib.name}' + (lib.version != null ? ' ${lib.version}' : "") + ' --skip-dependencies');
+						Sys.command('haxelib install ${lib.name} ' + (lib.version != null ? lib.version : "") + ' --skip-dependencies');
+						//CommandUtil.print('haxelib install ${lib.name}' + (lib.version != null ? ' ${lib.version}' : "") + ' --skip-dependencies');
 					case "git":
-						//if(lib.githubUrl != null) Sys.command('haxelib git ${lib.name} ${lib.githubUrl} --skip-dependencies');
-						if(lib.githubUrl != null) CommandUtil.print('haxelib git ${lib.name} ${lib.githubUrl} --skip-dependencies');
+						if(lib.githubUrl != null) Sys.command('haxelib git ${lib.name} ${lib.githubUrl} --skip-dependencies');
+						//if(lib.githubUrl != null) CommandUtil.print('haxelib git ${lib.name} ${lib.githubUrl} --skip-dependencies');
 					default:
 						CommandUtil.print("WARNING: the haxelib \"" + lib.name + "\" does not have a valid type! Please use \"haxelib\" or \"git\".");
 				}

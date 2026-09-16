@@ -3,6 +3,10 @@ package psychlua;
 import backend.WeekData;
 import objects.Character;
 
+#if LUA_ALLOWED
+import psychlua.objects.ModchartSprite;
+#end
+
 import flixel.util.FlxAxes;
 import openfl.display.BlendMode;
 import flixel.text.FlxText;
@@ -18,6 +22,14 @@ typedef LuaTweenOptions = {
 	onComplete:Null<String>,
 	loopDelay:Float,
 	ease:EaseFunction
+}
+
+interface ScriptInterface {
+	public var scriptName:String;
+    public function set(variable:String, data:Dynamic):Void;
+	public function get(variable:String):Dynamic;
+    public function call(func:String, args:Array<Dynamic>):Dynamic;
+    public function stop():Void;
 }
 
 class LuaUtils

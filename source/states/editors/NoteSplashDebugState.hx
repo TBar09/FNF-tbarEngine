@@ -6,7 +6,9 @@ import objects.NoteSplash;
 import flixel.addons.ui.FlxInputText;
 import flixel.addons.ui.FlxUINumericStepper;
 
-class NoteSplashDebugState extends MusicBeatState
+import states.editors.backend.EditorState;
+
+class NoteSplashDebugState extends EditorState
 {
 	var config:NoteSplashConfig;
 	var forceFrame:Int = -1;
@@ -33,9 +35,12 @@ class NoteSplashDebugState extends MusicBeatState
 
 	public static final defaultTexture:String = 'noteSplashes';
 
+	var bgColorOriginal:FlxColor;
 	override function create()
 	{
+		bgColorOriginal = FlxG.camera.bgColor;
 		FlxG.camera.bgColor = FlxColor.fromHSL(0, 0, 0.5);
+
 		selection = new FlxSprite(0, 270).makeGraphic(150, 150, FlxColor.BLACK);
 		selection.alpha = 0.4;
 		add(selection);
@@ -472,6 +477,7 @@ class NoteSplashDebugState extends MusicBeatState
 
 	override function destroy()
 	{
+		FlxG.camera.bgColor = bgColorOriginal;
 		super.destroy();
 	}
 }

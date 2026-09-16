@@ -191,25 +191,24 @@ class StoryMenuState extends MusicBeatState
 		if(Math.abs(intendedScore - lerpScore) < 10) lerpScore = intendedScore;
 
 		scoreText.text = "WEEK SCORE:" + lerpScore;
-
 		// FlxG.watch.addQuick('font', scoreText.font);
 
 		if (!movedBack && !selectedWeek)
 		{
 			var upP = controls.UI_UP_P;
 			var downP = controls.UI_DOWN_P;
-			if (upP)
-			{
+			
+			//Week changing
+			if (upP) {
 				changeWeek(-1);
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 			}
-
-			if (downP)
-			{
+			if (downP) {
 				changeWeek(1);
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 			}
 
+			//Week changing by mouse
 			if(FlxG.mouse.wheel != 0)
 			{
 				FlxG.sound.play(Paths.sound('scrollMenu'), 0.4);
@@ -217,22 +216,17 @@ class StoryMenuState extends MusicBeatState
 				changeDifficulty();
 			}
 
-			if (controls.UI_RIGHT)
-				rightArrow.animation.play('press')
-			else
-				rightArrow.animation.play('idle');
+			//Controls the arrow graphics
+			if (controls.UI_RIGHT) rightArrow.animation.play('press')
+			else rightArrow.animation.play('idle');
 
-			if (controls.UI_LEFT)
-				leftArrow.animation.play('press');
-			else
-				leftArrow.animation.play('idle');
+			if (controls.UI_LEFT) leftArrow.animation.play('press');
+			else leftArrow.animation.play('idle');
 
-			if (controls.UI_RIGHT_P)
-				changeDifficulty(1);
-			else if (controls.UI_LEFT_P)
-				changeDifficulty(-1);
-			else if (upP || downP)
-				changeDifficulty();
+			//Difficulty changing
+			if (controls.UI_RIGHT_P) changeDifficulty(1);
+			else if (controls.UI_LEFT_P) changeDifficulty(-1);
+			else if (upP || downP) changeDifficulty();
 
 			if(FlxG.keys.justPressed.CONTROL)
 			{
@@ -301,6 +295,7 @@ class StoryMenuState extends MusicBeatState
 			catch(e:Dynamic)
 			{
 				trace('ERROR! $e');
+				selectedWeek = false;
 				return;
 			}
 			
@@ -331,12 +326,7 @@ class StoryMenuState extends MusicBeatState
 	var tweenDifficulty:FlxTween;
 	function changeDifficulty(change:Int = 0):Void
 	{
-		curDifficulty += change;
-
-		if (curDifficulty < 0)
-			curDifficulty = Difficulty.list.length-1;
-		if (curDifficulty >= Difficulty.list.length)
-			curDifficulty = 0;
+		curDifficulty = FlxMath.wrap(curDifficulty + change, 0, Difficulty.list.length - 1);
 
 		WeekData.setDirectoryFromWeek(loadedWeeks[curWeek]);
 
@@ -370,12 +360,7 @@ class StoryMenuState extends MusicBeatState
 
 	function changeWeek(change:Int = 0):Void
 	{
-		curWeek += change;
-
-		if (curWeek >= loadedWeeks.length)
-			curWeek = 0;
-		if (curWeek < 0)
-			curWeek = loadedWeeks.length - 1;
+		curWeek = FlxMath.wrap(curWeek + change, 0, loadedWeeks.length - 1);
 
 		var leWeek:WeekData = loadedWeeks[curWeek];
 		WeekData.setDirectoryFromWeek(leWeek);

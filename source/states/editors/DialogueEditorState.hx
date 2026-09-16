@@ -16,8 +16,9 @@ import objects.TypedAlphabet;
 
 import backend.cutscenes.DialogueBoxPsych;
 import backend.cutscenes.DialogueCharacter;
+import states.editors.backend.EditorState;
 
-class DialogueEditorState extends MusicBeatState
+class DialogueEditorState extends EditorState
 {
 	var character:DialogueCharacter;
 	var box:FlxSprite;

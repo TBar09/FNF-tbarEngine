@@ -4,7 +4,7 @@
 
 	<app
 		title="Friday Night Funkin': T-Bar Engine" file="TBarEngine"
-		packageName="com.tbar.tbarengine" package="com.tbar.tbarengine"
+		packageName="com.shadowmario.psychengine" package="com.shadowmario.psychengine"
 		main="Main" version="0.2.0" company="TBarEngine"
 	/>
 
@@ -32,6 +32,9 @@
 
 	<!-- Allows for Lua script support & access to the linc_luaJIT library. -->
 	<define name="LUA_ALLOWED" if="desktop || android" unless="hl || html5"/>
+
+	<!-- Allows for Shader support & access to shader classes like FlxRuntimeShader. -->
+	<define name="SHADERS_ALLOWED" unless="flash"/>
 
 	<!-- Allows for achievements & achievement support. -->
 	<define name="ACHIEVEMENTS_ALLOWED" />
@@ -102,10 +105,12 @@
 
 	<!--Mobile-specific-->
 	<window if="mobile" orientation="landscape" fullscreen="true" width="0" height="0" resizable="false"/>
+	
+	<!-- ___________________________ Android Settings __________________________ -->
 
-	<section if="android">
-		<config:android gradle-version="7.4.2" gradle-plugin="7.3.1" />
-	</section>
+	<!-- TODO -->
+	<!-- <config type="android" gradle-version="8.10.2" gradle-plugin="8.8.0" ndkVersion="27.0"  minimum-sdk-version="26" target-sdk-version="35"/> -->
+	<config:android gradle-version="7.4.2" gradle-plugin="7.3.1" />
 
 	<!-- _____________________________ Path Settings ____________________________ -->
 
@@ -124,10 +129,12 @@
 	<assets path="assets/videos"        library="videos"        if="VIDEOS_ALLOWED"/>
 	<assets path="assets/songs"         library="songs"         exclude="*.ogg" if="web"/>
 	<assets path="assets/songs"         library="songs"         exclude="*.mp3" unless="web"/>
+
 	<section if="TITLE_SCREEN_EASTER_EGG">
 		<assets path="assets/secrets" rename="assets/shared" exclude="*.ogg" if="web"/>
 		<assets path="assets/secrets" rename="assets/shared" exclude="*.mp3"  unless="web"/>
 	</section>
+
 	<section if="BASE_GAME_FILES">
 		<assets path="assets/base_game" rename="assets" exclude="*.ogg" if="web"/>
 		<assets path="assets/base_game" rename="assets" exclude="*.mp3"  unless="web"/>
@@ -165,6 +172,8 @@
 	<haxelib name="flixel-addons" version="3.2.1" />
 	<haxelib name="flixel-ui" />
 	<haxelib name="tjson" />
+
+	<haxelib name="moonchart" optional="true"/>
 
 	<!--Psych stuff needed-->
 	<haxelib name="linc_luajit" if="LUA_ALLOWED"/>

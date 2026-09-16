@@ -3,6 +3,7 @@ package backend.external;
 #if(cpp && windows)
 import backend.util.CppAPI.MessageBoxIcon;
 import backend.util.CppAPI.MessageBoxType;
+import backend.util.CppAPI.MessageBoxReturn;
 #end
 
 #if(cpp && windows)
@@ -121,7 +122,8 @@ class CppBackend
 	')
 	public static function setWindowTitleColor(color:Array<Int>) {}
 
-	public static function makeMessageBox(title:String, text:String, icon:MessageBoxIcon, msgType:MessageBoxType):Int {
+	public static function makeMessageBox(title:String, text:String,
+		icon:MessageBoxIcon, msgType:MessageBoxType):MessageBoxReturn {
 		return untyped __cpp__('MessageBoxA(GetActiveWindow(), text, title, icon | msgType)');
 	}
 	#end

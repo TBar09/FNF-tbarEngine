@@ -87,13 +87,16 @@ class BaseStage extends FlxBasic
 	public function eventPushedUnique(event:EventNote) {}
 
 	// Things to replace FlxGroup stuff and inject sprites directly into the state
-	inline function add(object:FlxBasic) game.add(object);
-	inline function remove(object:FlxBasic) game.remove(object);
-	inline function insert(position:Int, object:FlxBasic) game.insert(position, object);
 	inline function indexOf(obj:FlxBasic):Int { //Stupid ahh hashlink
 		return #if hl members.indexOf(obj, 0) #else members.indexOf(obj) #end;
 	}
-	
+
+	inline function add(object:FlxBasic) game.add(object);
+	inline function insert(position:Int, object:FlxBasic) game.insert(position, object);
+	inline function remove(object:FlxBasic) { //Stupid ahh hashlink - Part 2
+		#if hl game.remove(object, false) #else game.remove(object) #end;
+	}
+
 	public function addBehindGF(obj:FlxBasic) insert(indexOf(game.gfGroup), obj);
 	public function addBehindBF(obj:FlxBasic) insert(indexOf(game.boyfriendGroup), obj);
 	public function addBehindDad(obj:FlxBasic) insert(indexOf(game.dadGroup), obj);

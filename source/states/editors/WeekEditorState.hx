@@ -23,7 +23,9 @@ import objects.HealthIcon;
 import objects.MenuCharacter;
 import objects.MenuItem;
 
-class WeekEditorState extends MusicBeatState
+import states.editors.backend.EditorState;
+
+class WeekEditorState extends EditorState
 {
 	var txtWeekTitle:FlxText;
 	var bgSprite:FlxSprite;

@@ -52,9 +52,6 @@ class Song
 	public var player1:String = 'bf';
 	public var player2:String = 'dad';
 	public var gfVersion:String = 'gf';
-	#if hl
-	static var eventArray:Array<Dynamic> = [];
-	#end
 
 	private static function onLoadJson(songJson:Dynamic) // Convert old charts to newest format
 	{
@@ -80,9 +77,8 @@ class Song
 					if(note[1] < 0)
 					{
 						#if hl
-						if(eventArray == null) eventArray = [];
-						eventArray = [note[0], [[note[2], note[3], note[4]]]];
-						songJson.events.push(eventArray);
+						var __eventArray:Array<Dynamic> = [note[0], [[note[2], note[3], note[4]]]];
+						songJson.events.push(__eventArray);
 						#else
 						songJson.events.push([note[0], [[note[2], note[3], note[4]]]]);
 						#end
@@ -102,29 +98,33 @@ class Song
 		this.bpm = bpm;
 	}
 
-	public static function loadFromJson(jsonInput:String, ?folder:String):SwagSong
+	public static function loadFromJson(jsonInput:String, ?folder:String, ?isText:Bool = false):SwagSong
 	{
 		var rawJson = null;
 		if(folder == null || folder.length <= 0) folder = "tutorial"; //crash safety
 
-		var formattedFolder:String = Paths.formatToSongPath(folder);
-		var formattedSong:String = Paths.formatToSongPath(jsonInput);
-		#if MODS_ALLOWED
-		var moddyFile:String = Paths.modsJson(formattedFolder + '/' + formattedSong);
-		if(FileSystem.exists(moddyFile)) {
-			rawJson = File.getContent(moddyFile).trim();
-		}
-		#end
-
-		if(rawJson == null) {
-			var path:String = Paths.json(formattedFolder + '/' + formattedSong);
-
-			#if sys
-			if(FileSystem.exists(path))
-				rawJson = File.getContent(path).trim();
-			else
+		if(!isText) {
+			var formattedFolder:String = Paths.formatToSongPath(folder);
+			var formattedSong:String = Paths.formatToSongPath(jsonInput);
+			#if MODS_ALLOWED
+			var moddyFile:String = Paths.modsJson(formattedFolder + '/' + formattedSong);
+			if(FileSystem.exists(moddyFile)) {
+				rawJson = File.getContent(moddyFile).trim();
+			}
 			#end
-				rawJson = Assets.getText(Paths.json(formattedFolder + '/' + formattedSong)).trim();
+
+			if(rawJson == null) {
+				var path:String = Paths.json(formattedFolder + '/' + formattedSong);
+
+				#if sys
+				if(FileSystem.exists(path))
+					rawJson = File.getContent(path).trim();
+				else
+				#end
+					rawJson = Assets.getText(Paths.json(formattedFolder + '/' + formattedSong)).trim();
+			}
+		} else {
+			rawJson = jsonInput;
 		}
 
 		while (!rawJson.endsWith("}"))

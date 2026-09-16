@@ -1,14 +1,34 @@
 package states.stages;
 
+import shaders.WiggleEffect;
 import flixel.addons.effects.FlxTrail;
 import substates.GameOverSubstate;
 import backend.cutscenes.DialogueBox;
 #if (!MODS_ALLOWED || !sys)
 import openfl.utils.Assets as OpenFlAssets;
 #end
+#if SHADERS_ALLOWED
+import shaders.WiggleEffect;
+#end
 
 class SchoolEvil extends BaseStage
 {
+	#if SHADERS_ALLOWED
+	var wiggleShaderBack:WiggleEffect;
+	var wiggleShaderSchool:WiggleEffect;
+	var wiggleShaderGround:WiggleEffect;
+	var wiggleShaderTrees:WiggleEffect;
+
+	function createWiggleShader(speed:Float, freq:Float, amplitude:Float, ?effect:WiggleEffectType = DREAMY):WiggleEffect {
+		var wiggleShader:WiggleEffect = new WiggleEffect();
+		wiggleShader.waveSpeed = speed;
+		wiggleShader.waveFrequency = freq;
+		wiggleShader.waveAmplitude = amplitude;
+		wiggleShader.effectType = effect;
+		wiggleShader.isPixel = true;
+		return wiggleShader;
+	}
+	#end
 	override function create()
 	{
 		var _song = PlayState.SONG;
@@ -18,15 +38,48 @@ class SchoolEvil extends BaseStage
 		if(_song.gameOverChar == null || _song.gameOverChar.trim().length < 1) GameOverSubstate.characterName = 'bf-pixel-dead';
 
 		var posX = 400;
-		var posY = 200;
+		var posY = 380;
 
-		var bg:BGSprite;
-		if(!ClientPrefs.data.lowQuality) bg = new BGSprite('weeb/animatedEvilSchool', posX, posY, 1, 1, ['background 2'], true);
-		else bg = new BGSprite('weeb/animatedEvilSchool_low', posX, posY, 1, 1);
+		if(ClientPrefs.data.lowQuality) {
+			var bg:BGSprite = new BGSprite('weeb/evil/animatedEvilSchool_low', posX, posY - 180, 1, 1);
+			bg.scale.set(PlayState.daPixelZoom, PlayState.daPixelZoom);
+			bg.antialiasing = false;
+			add(bg);
+		} else {
+			var bg:BGSprite = new BGSprite("weeb/evil/weebBackTrees", posX, posY - 30, 0.5, 0.5);
+			bg.scale.set(PlayState.daPixelZoom, PlayState.daPixelZoom);
+			bg.antialiasing = false;
+			add(bg);
 
-		bg.scale.set(PlayState.daPixelZoom, PlayState.daPixelZoom);
-		bg.antialiasing = false;
-		add(bg);
+			var school:BGSprite = new BGSprite("weeb/evil/weebSchool", posX, posY - 40, 0.75, 0.75);
+			school.scale.set(PlayState.daPixelZoom, PlayState.daPixelZoom);
+			school.antialiasing = false;
+			add(school);
+
+			var ground:BGSprite = new BGSprite("weeb/evil/weebStreet", posX, posY, 1, 1);
+			ground.scale.set(PlayState.daPixelZoom, PlayState.daPixelZoom);
+			ground.antialiasing = false;
+			add(ground);
+
+			var trees:BGSprite = new BGSprite("weeb/evil/weebTrees", posX, posY, 1, 1);
+			trees.scale.set(PlayState.daPixelZoom, PlayState.daPixelZoom);
+			trees.antialiasing = false;
+			add(trees);
+
+			#if SHADERS_ALLOWED
+			if(ClientPrefs.data.shaders) {
+				wiggleShaderBack = createWiggleShader(2 * 0.8, 4 * 0.4, 0.011, DREAMY);
+				wiggleShaderSchool = createWiggleShader(2, 4, 0.017, DREAMY);
+				wiggleShaderGround = createWiggleShader(2, 4, 0.007, DREAMY);
+				wiggleShaderTrees = createWiggleShader(2, 4, 0.007, DREAMY);
+
+				bg.shader = wiggleShaderBack;
+				school.shader = wiggleShaderSchool;
+				ground.shader = wiggleShaderGround;
+				trees.shader = wiggleShaderTrees;
+			}
+			#end
+		}
 
 		setDefaultGF('gf-pixel');
 
@@ -38,11 +91,24 @@ class SchoolEvil extends BaseStage
 			setStartCallback(schoolIntro);
 		}
 	}
+
 	override function createPost()
 	{
 		var trail:FlxTrail = new FlxTrail(dad, null, 4, 24, 0.3, 0.067);
 		addBehindDad(trail);
 	}
+
+	#if SHADERS_ALLOWED
+	override function update(elapsed:Float)
+	{
+		if(wiggleShaderBack != null) {
+			wiggleShaderBack.update(elapsed);
+			wiggleShaderSchool.update(elapsed);
+			wiggleShaderGround.update(elapsed);
+			wiggleShaderTrees.update(elapsed);
+		}
+	}
+	#end
 
 	// Ghouls event
 	var bgGhouls:BGSprite;
@@ -67,13 +133,12 @@ class SchoolEvil extends BaseStage
 			case "Trigger BG Ghouls":
 				if(!ClientPrefs.data.lowQuality)
 				{
-					bgGhouls = new BGSprite('weeb/bgGhouls', -100, 190, 0.9, 0.9, ['BG freaks glitch instance'], false);
+					bgGhouls = new BGSprite('weeb/bgGhouls', -300, 190, 1, 1, ['BG freaks glitch instance'], false);
 					bgGhouls.setGraphicSize(Std.int(bgGhouls.width * PlayState.daPixelZoom));
 					bgGhouls.updateHitbox();
 					bgGhouls.visible = false;
 					bgGhouls.antialiasing = false;
-					bgGhouls.animation.finishCallback = function(name:String)
-					{
+					bgGhouls.animation.finishCallback = function(name:String) {
 						if(name == 'BG freaks glitch instance')
 							bgGhouls.visible = false;
 					}

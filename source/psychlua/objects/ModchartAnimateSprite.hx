@@ -1,4 +1,4 @@
-package psychlua;
+package psychlua.objects;
 
 #if flxanimate
 class ModchartAnimateSprite extends FlxAnimate

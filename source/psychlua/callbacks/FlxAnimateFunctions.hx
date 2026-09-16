@@ -1,8 +1,10 @@
-package psychlua;
+package psychlua.callbacks;
 
 import openfl.utils.Assets;
 
 #if (LUA_ALLOWED && flxanimate)
+import psychlua.objects.ModchartAnimateSprite;
+
 class FlxAnimateFunctions
 {
 	public static function implement(funk:FunkinLua)

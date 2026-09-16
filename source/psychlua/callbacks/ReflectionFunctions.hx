@@ -1,4 +1,4 @@
-package psychlua;
+package psychlua.callbacks;
 
 import Type.ValueType;
 import haxe.Constraints;

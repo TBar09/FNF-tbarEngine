@@ -79,14 +79,11 @@ class Philly extends BaseStage
 	override function update(elapsed:Float)
 	{
 		phillyWindow.alpha -= (Conductor.crochet / 1000) * FlxG.elapsed * 1.5;
-		if(phillyGlowParticles != null)
-		{
+		if(phillyGlowParticles != null) {
 			var i:Int = phillyGlowParticles.members.length-1;
-			while (i > 0)
-			{
+			while (i > 0) {
 				var particle = phillyGlowParticles.members[i];
-				if(particle.alpha <= 0)
-				{
+				if(particle.alpha <= 0) {
 					particle.kill();
 					phillyGlowParticles.remove(particle, true);
 					particle.destroy();
@@ -99,12 +96,21 @@ class Philly extends BaseStage
 	override function beatHit()
 	{
 		phillyTrain.beatHit(curBeat);
-		if (curBeat % 4 == 0)
-		{
+		if (curBeat % 4 == 0) {
 			curLight = FlxG.random.int(0, phillyLightsColors.length - 1, [curLight]);
 			phillyWindow.color = phillyLightsColors[curLight];
 			phillyWindow.alpha = 1;
 		}
+	}
+
+	override function closeSubState()
+	{
+		if(paused) phillyTrain.pauseResumeAnimation(false);
+	}
+
+	override function openSubState(SubState:flixel.FlxSubState)
+	{
+		if(paused) phillyTrain.pauseResumeAnimation(true);
 	}
 
 	override function eventCalled(eventName:String, value1:String, value2:String, flValue1:Null<Float>, flValue2:Null<Float>, strumTime:Float)
@@ -119,11 +125,9 @@ class Philly extends BaseStage
 				switch(lightId)
 				{
 					case 0:
-						if(phillyGlowGradient.visible)
-						{
+						if(phillyGlowGradient.visible) {
 							doFlash();
-							if(ClientPrefs.data.camZooms)
-							{
+							if(ClientPrefs.data.camZooms) {
 								FlxG.camera.zoom += 0.5;
 								camHUD.zoom += 0.1;
 							}
@@ -134,8 +138,7 @@ class Philly extends BaseStage
 							phillyGlowParticles.visible = false;
 							curLightEvent = -1;
 
-							for (who in chars)
-							{
+							for (who in chars) {
 								who.color = FlxColor.WHITE;
 							}
 							phillyStreet.color = FlxColor.WHITE;
@@ -145,11 +148,9 @@ class Philly extends BaseStage
 						curLightEvent = FlxG.random.int(0, phillyLightsColors.length-1, [curLightEvent]);
 						var color:FlxColor = phillyLightsColors[curLightEvent];
 
-						if(!phillyGlowGradient.visible)
-						{
+						if(!phillyGlowGradient.visible) {
 							doFlash();
-							if(ClientPrefs.data.camZooms)
-							{
+							if(ClientPrefs.data.camZooms) {
 								FlxG.camera.zoom += 0.5;
 								camHUD.zoom += 0.1;
 							}
@@ -159,9 +160,7 @@ class Philly extends BaseStage
 							phillyWindowEvent.visible = true;
 							phillyGlowGradient.visible = true;
 							phillyGlowParticles.visible = true;
-						}
-						else if(ClientPrefs.data.flashing)
-						{
+						} else if(ClientPrefs.data.flashing) {
 							var colorButLower:FlxColor = color;
 							colorButLower.alphaFloat = 0.25;
 							FlxG.camera.flash(colorButLower, 0.5, null, true);
@@ -171,12 +170,10 @@ class Philly extends BaseStage
 						if(!ClientPrefs.data.flashing) charColor.saturation *= 0.5;
 						else charColor.saturation *= 0.75;
 
-						for (who in chars)
-						{
+						for (who in chars) {
 							who.color = charColor;
 						}
-						phillyGlowParticles.forEachAlive(function(particle:PhillyGlowParticle)
-						{
+						phillyGlowParticles.forEachAlive(function(particle:PhillyGlowParticle) {
 							particle.color = color;
 						});
 						phillyGlowGradient.color = color;
@@ -186,15 +183,12 @@ class Philly extends BaseStage
 						phillyStreet.color = color;
 
 					case 2: // spawn particles
-						if(!ClientPrefs.data.lowQuality)
-						{
+						if(!ClientPrefs.data.lowQuality) {
 							var particlesNum:Int = FlxG.random.int(8, 12);
 							var width:Float = (2000 / particlesNum);
 							var color:FlxColor = phillyLightsColors[curLightEvent];
-							for (j in 0...3)
-							{
-								for (i in 0...particlesNum)
-								{
+							for (j in 0...3) {
+								for (i in 0...particlesNum) {
 									var particle:PhillyGlowParticle = new PhillyGlowParticle(-400 + width * i + FlxG.random.float(-width / 5, width / 5), phillyGlowGradient.originalY + 200 + (FlxG.random.float(0, 125) + j * 40), color);
 									phillyGlowParticles.add(particle);
 								}
