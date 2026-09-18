@@ -6,21 +6,24 @@ import haxe.macro.Context;
 import haxe.macro.Expr;
 #end
 
-import backend.system.Log.print;
-
 class MacroUtil {
-	public static var defines(get, null):Map<String, Dynamic>;
-	private static inline function get_defines() return __getDefines();
-	private static macro function __getDefines() {
-		#if display
-		return macro $v{[]};
-		#else
-		return macro $v{Context.getDefines()};
-		#end
-	}
-
-	//Thanks to the developers of codename for this function!
-	macro public static function generateReflectionLike(totalArguments:Int, funcName:String, argsName:String) {
+	/**
+	 * Generates a reflection-like call method expression, primarily for
+	 * `lime.system.CFFI.load`, since running it normally through scripts
+	 * make the game freeze when presented with arguments.
+	 *
+	 * How this error is bypassed is by generating a switch case with
+	 * `totalArguments` number of cases. Each case runs the literal `CFFI.load`
+	 * function with the case's amount of arguments. By doing this, the CFFI
+	 * function is not being ran reflectively, which allows it to pass arguments
+	 * into itself.
+	 *
+	 * However, the switch case is not infinitely long, and is only as long as
+	 * `totalArguments` is. This means that any CFFI function that has an argument
+	 * count that exceeds this amount doesn't get catched by any case and throws a
+	 * `Too many arguments` error.
+	 */
+	macro public static function generateReflectionLike(totalArguments:Int, funcName:String, argsName:String):Expr {
 		#if macro
 		totalArguments++;
 
@@ -33,7 +36,7 @@ class MacroUtil {
 			funcCalls.push(macro $i{funcName}($a{args}));
 		}
 
-		var expr = {
+		var expr:Expr = {
 			pos: Context.currentPos(),
 			expr: ESwitch(
 				macro ($i{argsName}.length),
@@ -49,61 +52,6 @@ class MacroUtil {
 		}
 
 		return expr;
-		#end
-	}
-
-	public static final addonClasses:Array<String> = [
-		#if (IMPORT_AWAY3D && AWAY3D_ALLOWED && away3d) "away3d", "flixel.flx3d", #end
-		#if (VIDEOS_ALLOWED && hxvlc) "hxvlc.flixel", #end
-		"objects",
-		"backend"
-	];
-	@:unreflective public static function includeClasses() {
-		#if macro
-		for(classPackage in addonClasses) Compiler.include(classPackage);
-		#end
-	}
-
-	/*
-	 * USED FOR COMPILING THE FORK
-	 */
-	@:unreflective public static function compileMacros() {
-		#if macro
-		print('Compiling T-Bar Engine v2.0, please wait...');
-
-		#if(haxe != "4.2.5" && !(haxe >= "4.3.0"))
-		final defineMap = Context.getDefines();
-		print('_______________________________WARNING_______________________________
-You are currently using haxe version ${defineMap.get("haxe")}
-T-Bar Engine has only been tested with version 4.2.5 and may break with
-other haxe versions (haxe 4.3.X is also compatible with compiling).
-		');
-
-		print('Proceeding...');
-		#end
-
-		/* Setting up other internal things */
-
-		//since using `#if 32bits` throws an error
-		if(Context.defined("32bits")) {
-			Compiler.define("TBAR_ENGINE_32BITS", "1");
-			Compiler.define("x86_BUILD", "1"); //Psych 1.0 exclusive preprocessor
-		}
-
-		if(Context.defined("hscript_improved_dev"))
-			Compiler.define("hscript-improved", "1");
-
-		if(Context.defined("WATERMARKS")) {
-			if(Context.definedValue("WATERMARKS") == "tbar") Compiler.define("TBAR_WATERMARKS", "1");
-			else if(Context.definedValue("WATERMARKS") == "psych") Compiler.define("PSYCH_WATERMARKS", "1");
-		}
-
-		#if(desktop || (android || ios))
-		Compiler.include("backend.external.ALSoftConfig"); //Just to make sure it gets included
-		#end
-
-		//Include additional classes to help with hscript. Comment this out if you want shorten the compile time
-		includeClasses();
 		#end
 	}
 }

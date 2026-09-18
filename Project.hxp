@@ -1,0 +1,728 @@
+package;
+
+import hxp.*;
+import lime.tools.*;
+import lime.tools.HXProject;
+
+import hxp.Log.println;
+import hxp.Log.info;
+import hxp.Log.warn;
+import hxp.Log.error;
+
+typedef AppData = {
+	var title:String;
+	var file:String;
+	var version:String;
+	var packageName:String;
+	var company:String;
+	var mainClass:String;
+}
+
+class Project extends HXProject {
+	public static var applicationData:AppData = {
+		title: "Friday Night Funkin': T-Bar Engine", 	// The title of the window.
+		file: "TBarEngine", 							// The file executable name.
+		version: "0.3.0", 								// The version of the engine.
+		packageName: "com.tbar.tbarengine",				// The package name, for mobile builds.
+		company: "TBarEngine",							// The company name. This will be the folder name in AppData.
+		mainClass: "Main"								// The path to the `Main.hx` class.
+	};
+
+
+	/** Whether the target platform is Hashlink. */
+	public var hashlink(get, never):Bool;
+
+	/** Whether the target platform is Neko. */
+	public var neko(get, never):Bool;
+
+	/** Whether the target platform is 32bit. */
+	public var x32(get, never):Bool;
+
+	/** Whether the target platform is 64bit. */
+	public var x64(get, never):Bool;
+
+	public function new() {
+		super();
+		printPreBuildInfo();
+
+		/* ______________________ Application Settings ______________________ */
+
+		this.meta = {
+			title: applicationData.title,
+			version: applicationData.version,
+			packageName: applicationData.packageName,
+			company: applicationData.company
+		};
+
+		this.app = {
+			file: applicationData.file,
+			main: applicationData.mainClass,
+			swfVersion: 11.8,
+			preloader: "flixel.system.FlxPreloader"
+		};
+
+		setHaxeDefine("LINC_LUA_RELATIVE_DYNAMIC_LIB");
+
+		/* _________________________ Engine Defines _________________________ */
+
+		/*
+		 * Allows for modpack support.
+		 */
+		setDefine("MODS_ALLOWED", "1", ((this.platformType == DESKTOP || this.platformType == MOBILE) && this.platformType != WEB));
+
+		/*
+		 * Allows for hscript support & access to the hscript-improved library.
+		 */
+		setDefine("HSCRIPT_ALLOWED");
+
+		if(defined("HSCRIPT_ALLOWED")) {
+			/*
+			 * Adds haxe scripting support to the menus.
+			 */
+			setDefine("SOFTCODED_STATES");
+
+			/*
+			 * Allows for creating custom classes using HScript. Increases compile time.
+			 */
+			setDefine("CUSTOM_CLASSES");
+
+			/*
+			 * Adds global scripts, which always run until their respective modpack is disabled.
+			 */
+			setDefine("GLOBAL_SCRIPTS");
+		}
+
+		/*
+		 * This allows for lua scripting support.
+		 */
+		setDefine("LUA_ALLOWED", "1", isLuaAllowed());
+
+		/*
+		 * This is defined when any one of the scripting systems is allowed.
+		 */
+		setDefine("SCRIPTS_ALLOWED", "1", (defined("HSCRIPT_ALLOWED") || defined("LUA_ALLOWED")));
+
+		/*
+		 * Allows for Shader support & access to shader classes like FlxRuntimeShader.
+		 */
+		setDefine("SHADERS_ALLOWED", "1", (this.target != Platform.FLASH));
+
+		/*
+		 * Allows for achievements & achievement support.
+		 */
+		setDefine("ACHIEVEMENTS_ALLOWED");
+
+		/*
+		 * Allows for achievements & achievement support.
+		 */
+		setDefine("DISCORD_ALLOWED", "1", (this.target != ANDROID && this.platformType != WEB && !this.hashlink));
+
+		/*
+		 * Allows for achievements & achievement support.
+		 */
+		setDefine("VIDEOS_ALLOWED", "1", isVideosAllowed());
+
+		/*
+		 * Adds the base FNF songs & assets.
+		 */
+		setDefine("BASE_GAME_FILES");
+
+		/*
+		 * Allows the fork to check for updates. Not recommended to use this in source mods.
+		 */
+		setDefine("CHECK_FOR_UPDATES");
+
+		
+
+		/* ______________________ T-Bar Engine Defines ______________________ */
+		
+		/*
+		 * Allows for 3D support & access to the away3d library.
+		 */
+		setDefine("AWAY3D_ALLOWED");
+
+		/*
+		 * Imports all away3d classes to expand Hscript compatibility with it. Increases compile time.
+		 */
+		setDefine("IMPORT_AWAY3D", "1", defined("AWAY3D_ALLOWED"));
+
+		/*
+		 * Allows for ".ndll" support.
+		 */
+		setDefine("NDLL_ALLOWED", "1", (this.platformType != WEB && !this.hashlink));
+
+		/*
+		 * Adds the crash hander. To remove the crash handler completely, just comment this line out.
+		 * "tbar" = New crash handler that doesn't close the game.
+		 * "psych" = Original psych crash handler.
+		 */
+		setDefine("CRASH_HANDLER", "tbar");
+
+		/*
+		 * Turns on the title screen watermarks. To show the default FNF watermarks, just comment this line out.
+		 * "tbar" = T-Bar Engine credits will be shown
+		 * "psych" = Original Psych Engine credits will be shown
+		 */
+		setDefine("WATERMARKS", "tbar");
+
+		if(defined("officialBuild")) setDefine("TITLE_SCREEN_EASTER_EGG");
+
+		/* ________________________ Windows Settings ________________________ */
+
+		// These window settings apply to all targets
+		window = {
+			width: 1280,
+			height: 720,
+			background: 0x000000,
+			hardware: true,
+			vsync: false
+		};
+
+		// HTML5 specific
+		if(this.target == Platform.HTML5) {
+			window.resizable = true;
+		}
+
+		// Desktop & Mobile specific
+		if(this.platformType == PlatformType.DESKTOP) {
+			window.orientation = LANDSCAPE;
+			window.fullscreen = false;
+			window.resizable = true;
+			window.vsync = false;
+		}
+
+		// Switch specific
+		if(false) {
+			window.orientation = LANDSCAPE;
+			window.fullscreen = true;
+			window.width = 0;
+			window.height = 0;
+			window.resizable = true;
+		}
+
+		// Mobile specific
+		if(this.platformType == PlatformType.MOBILE) {
+			window.orientation = LANDSCAPE;
+			window.fullscreen = true;
+			window.width = 0;
+			window.height = 0;
+			window.resizable = false;
+		}
+
+		/* ________________________ Android Settings ________________________ */
+
+		// TODO: Do more android stuff
+		if(this.target == ANDROID) {
+			// configureAndroid("8.10.2", "8.8.0", "27.0", 26, 35);
+			configureAndroid("7.4.2", "7.3.1");
+		}
+
+		/* _________________________ Path Settings __________________________ */
+
+		var buildDirectory:String = (this.debug ? "export/debug" : "export/release");
+		if(this.x32) buildDirectory += "-32bit";
+
+		this.app.path = buildDirectory;
+		this.sources.push("source");
+
+		/* ______________________ Asset Path Settings ______________________ */
+
+		addLibrary("songs", true);
+
+		addAssets("assets/fonts");
+		addAssets("assets/shared", null, null, [(this.platformType == PlatformType.WEB ? "*.ogg" : "*.mp3")]);
+		addAssets("assets/songs", null, null, [(this.platformType == PlatformType.WEB ? "*.ogg" : "*.mp3")], false, "songs");
+
+		if(defined("VIDEOS_ALLOWED")) {
+			addLibrary("videos", true);
+			addAssets("assets/videos", null, null, [(this.platformType == PlatformType.WEB ? "*.ogg" : "*.mp3")], false, "videos");
+		}
+
+		if(defined("TITLE_SCREEN_EASTER_EGG")) {
+			addAssets("assets/secrets", "assets/shared", null, [(this.platformType == PlatformType.WEB ? "*.ogg" : "*.mp3")], true);
+		}
+
+		if(defined("BASE_GAME_FILES")) {
+			addAssets("assets/base_game", "assets", null, [(this.platformType == PlatformType.WEB ? "*.ogg" : "*.mp3")]);
+			addAssets("assets/base_game/songs", "assets/songs", null, [(this.platformType == PlatformType.WEB ? "*.ogg" : "*.mp3")], false, "songs");
+
+			addLibrary("week_assets", true);
+			addAssets("assets/week_assets", "assets", null, [(this.platformType == PlatformType.WEB ? "*.ogg" : "*.mp3")], false, "week_assets");
+		}
+
+		if(this.platformType == DESKTOP) {
+			var fileExtension:String = (this.target == WINDOWS ? "ini" : "conf");
+			addAssets("alsoft.txt", "plugins/alsoft." + fileExtension);
+		}
+
+		if(defined("MODS_ALLOWED")) {
+			addAssets("example_mods", "mods", null, null, false);
+		}
+
+		addAssets("art/readme.txt", "do NOT readme.txt", null, null, false);
+
+		/* ___________________________ Libraries ___________________________ */
+
+		/*
+		addHaxelib("openfl", "9.3.2");
+		addHaxelib("lime", "8.0.1");
+		addHaxelib("flixel", "5.5.0");
+		*/
+
+		addHaxelib("flixel", "5.5.0");
+		addHaxelib("flixel-addons", "3.2.1");
+		addHaxelib("flixel-ui");
+
+		addHaxelib("tjson");
+		addHaxelib("moonchart");
+
+		if(defined("LUA_ALLOWED")) addHaxelib("linc_luajit");
+		addHaxelib("flxanimate");
+
+		if(defined("VIDEOS_ALLOWED")) {
+			addHaxelib("hxvlc");
+
+			setHaxeDefine("HXVLC_NO_SHARE_DIRECTORY");
+			if(this.debug) setHaxeDefine("HXC_LIBVLC_LOGGING");
+		}
+
+		if(defined("DISCORD_ALLOWED")) {
+			addHaxelib("hxdiscord_rpc");
+			setHaxeDefine("DISCORD_DISABLE_IO_THREAD");
+		}
+
+		if(defined("AWAY3D_ALLOWED")) addHaxelib("away3d");
+		if(defined("HSCRIPT_ALLOWED")) {
+			addHaxelib("hscript-improved-dev");
+			setDefine("hscriptPos");
+		}
+
+		if(this.target == LINUX) setHaxeDefine("NO_PRECOMPILED_HEADERS");
+
+		// Enables a terminal log prompt on debug builds
+		if(this.debug) addHaxelib("hxcpp-debug-server");
+
+		/* _________________________ Engine Macros _________________________ */
+
+		addMacro("allowPackage('flash')");
+		addMacro("include('my.pack')");
+
+		addMacro("backend.system.macros.IncludeMacro.compile()");
+		addMacro("backend.system.macros.CompilerMacro.compile()");
+
+		/* __________________________ Haxedefines __________________________ */
+
+		// Enable the Flixel core recording system
+		//setHaxeFlag("-D", "FLX_RECORD");
+
+		// Disable the right and middle mouse buttons
+		//setHaxeFlag("-D", "FLX_NO_MOUSE_ADVANCED");
+
+		// Disable the native cursor API on Flash
+		//setHaxeFlag("-D", "FLX_NO_NATIVE_CURSOR");
+
+		// Disable the Flixel save feature on flash, since it crashes for some reason
+		if(this.target == Platform.FLASH) setHaxeFlag("-D", "FLX_NO_SAVE");
+
+		// Optimise inputs, be careful you will get null errors if you don't use conditionals in your game
+		if(this.platformType == PlatformType.MOBILE) {
+			setHaxeFlag("-D", "FLX_NO_MOUSE");
+			setHaxeFlag("-D", "FLX_NO_KEYBOARD");
+		} else if(this.platformType == PlatformType.DESKTOP) {
+			setHaxeFlag("-D", "FLX_NO_TOUCH");
+		}
+		//setHaxeFlag("-D", "FLX_NO_GAMEPAD");
+
+		// Disable the Flixel core sound tray
+		//setHaxeFlag("-D", "FLX_NO_SOUND_TRAY");
+
+		// Disable the Flixel sound management code
+		//setHaxeFlag("-D", "FLX_NO_SOUND_SYSTEM");
+
+		// Disable the Flixel core focus lost screen
+		//setHaxeFlag("-D", "FLX_NO_FOCUS_LOST_SCREEN");
+
+		// Disable the Flixel core debugger. Automatically gets set whenever you compile in release mode!
+		if(this.debug == false) setHaxeFlag("-D", "FLX_NO_DEBUG");
+
+		// Enable this on Nape release builds for a serious peformance improvement
+		if(this.debug == false) setHaxeFlag("-D", "NAPE_RELEASE_BUILD");
+
+		// Used for Izzy Engine's crash handler
+		if(defined("CRASH_HANDLER")) {
+			setHaxeDefine("HXCPP_CHECK_POINTER");
+			setHaxeDefine("HXCPP_STACK_LINE");
+			setHaxeDefine("HXCPP_STACK_TRACE");
+		}
+
+		setHaxeFlag("-D", "no-deprecation-warnings");
+
+		setHaxeFlag("-D", "message.reporting", "classic");
+
+		/* __________________________ Custom Icons _________________________ */
+
+		if(this.target == LINUX) addAssets("art/iconOG.png", "icon.png");
+
+		// Place custom nodes like icons here (higher priority to override the HaxeFlixel icon)
+		icons.push(new Icon("art/iconOG.png", 16));
+		icons.push(new Icon("art/iconOG.png", 32));
+		icons.push(new Icon("art/iconOG.png", 64));
+		icons.push(new Icon("art/iconOG.png"));
+    }
+
+	public inline function printPreBuildInfo():Void {
+		info('${applicationData.title} v${applicationData.version}');
+		printTargetInfo();
+
+		if(this.environment.exists("haxe")) {
+			var haxeVersion:String = this.environment.get("haxe");
+
+			if(haxeVersion == "4.2.5") // Specifically 4.2.5, since it was originally supported
+			{
+				warn('_______________________________WARNING_______________________________\nYou are currently using Haxe version 4.2.5.\nT-Bar Engine has dropped Haxe 4.2.5 support for v3.0 and is only compatible\nwith Haxe version "4.3.0" and higher. The recommended version to use is version 4.3.7!');
+				info('Continuing...\n');
+			}
+			else if(haxeVersion < "4.3.0") // Any Haxe version lower than 4.3
+			{
+				warn('_______________________________WARNING_______________________________\nYou are currently using Haxe version ${this.environment.get("haxe")}.\nT-Bar Engine is only compatible\nwith Haxe version "4.3.0" and higher. The recommended version to use is version 4.3.7!');
+				info('Continuing...\n');
+			}
+		}
+	}
+
+	public inline function printTargetInfo() {
+		var buildTargetInfo:String = "Build Target: ";
+
+		if(this.hashlink) buildTargetInfo += 'Hashlink (${stringifyBuildTarget()})';
+		else if(this.neko) buildTargetInfo += 'Neko (${stringifyBuildTarget()})';
+		else buildTargetInfo += stringifyBuildTarget();
+
+		if(this.x32) buildTargetInfo += " - 32Bit";
+
+		info(buildTargetInfo);
+		info('Compiling...\n');
+	}
+
+	/**
+	 * Whether LuaJIT is supported on the platform.
+	 *
+	 * Lua is supported on C++ platforms (Windows, Linux, Android, MacOS, IOS), but is not
+	 * supported on Hashlink or Neko.
+	 */
+	public inline function isLuaAllowed():Bool {
+		return (
+			(this.target == Platform.WINDOWS || this.target == Platform.LINUX || this.target == Platform.MAC || 
+				this.target == Platform.ANDROID || this.target == Platform.IOS)
+				&& (!this.hashlink && !this.neko /* && !this.x32 */)
+		);
+	}
+
+	/**
+	 * Whether HxVLC (Videos) is supported on the platform.
+	 *
+	 * Videos are supported on C++ platforms (Windows, Linux, Android, MacOS, IOS), but are not
+	 * supported on Hashlink, Web targets (HTML5 or Flash), or if the target is 32bit.
+	 */
+	public inline function isVideosAllowed():Bool {
+		return (
+			(this.target == Platform.WINDOWS || this.target == Platform.LINUX || this.target == Platform.MAC || 
+				this.target == Platform.ANDROID || this.target == Platform.IOS)
+				&& (!this.hashlink && this.platformType != WEB && !this.x32)
+		);
+	}
+
+	/* Backend */
+
+	public inline function addLibrary(name:String, preload:Null<Bool> = null, embed:Null<Bool> = null, type:String = null) {
+		this.libraries.push(new Library(name, name, type, embed, preload));
+	}
+
+	/**
+	 * Includes an asset file or directory into the output program.
+	 *
+	 * @param	path		The path to the file/directory, starting in the project directory.
+	 * @param	rename		What to rename the path to in the output, if any.
+	 * @param	include		A list of includes. If this is set, any file that won't abide by this
+	 *						won't be included in the output. `*` characters are wildcards.
+	 * @param	exclude		A list of excludes. If this is set, any file that matches something in this
+	 *						array won't be included in the output. `*` characters are wildcards.
+	 * @param	embed		If this is set as true, the files will be embedded into the executable.
+	 * @param	library		If this is set, the file/directory will be labelled under the library specified
+	 *						here.
+	 */
+	public function addAssets(path:String, rename:String = null, include:Array<String> = null, exclude:Array<String> = null, embed:Bool = false, library:Null<String> = null):Void
+	{
+		if(include == null) include = ["*"];
+		if(exclude == null) exclude = [];
+
+		exclude = exclude.concat([".*", "cvs", "thumbs.db", "desktop.ini", "*.hash"]);
+
+		// If the path is blank, just return to prevent errors
+		if(path == "") return;
+
+		// This is the actual target path, taking renaming into account
+		var targetPath:String = (rename != null ? rename : path);
+
+		// Check if the file/folder exists
+		if(!sys.FileSystem.exists(path)) {
+			Log.error("Could not find asset path \"" + path + "\"");
+			return;
+		}
+
+		// If the path is a folder, we recursively iterate through all of it's files
+		if(sys.FileSystem.isDirectory(path))
+		{
+			var files = sys.FileSystem.readDirectory(path);
+
+			if(targetPath != "") {
+				targetPath += "/";
+			}
+
+			for(file in files) {
+				if(sys.FileSystem.isDirectory(path + "/" + file)) {
+					if(this.filter(file, ["*"], exclude)) {
+						addAssets(path + "/" + file, targetPath + file, include, exclude, embed, library);
+					}
+				} else {
+					if(this.filter(file, include, exclude)) {
+						var curAsset:Asset = new Asset(path + "/" + file, targetPath + file, null, embed);
+						curAsset.library = library;
+						this.assets.push(curAsset);
+					}
+				}
+			}
+		}
+		else // This is just for standalone files
+		{
+			if(this.filter(path, include, exclude)) {
+				var curAsset:Asset = new Asset(path, targetPath, null, embed);
+				curAsset.library = library;
+				this.assets.push(curAsset);
+			}
+		}
+	}
+
+	/**
+	 * Sets a define in the program, both here and as a conditional.
+	 *
+	 * @param	name		The name of the define.
+	 * @param	value		An optional value to the define. Defaults to "1".
+	 * @param	condition	If this is true, then the define is set.
+	 */
+	public function setDefine(name:String, ?value:String = "1", ?condition:Bool = true):Void {
+		if(condition == true) {
+			this.defines.set(name, value);
+			this.haxedefs.set(name, value);
+			this.environment.set(name, value);
+		}
+	}
+
+	/**
+	 * Removes a define, if present.
+	 *
+	 * @param	name		The name of the define.
+	 * @param	condition	If this is true, then the define is removed.
+	 *
+	 * @return	True if the define is successfully removed.
+	 */
+	public function removeDefine(name:String, ?condition:Bool = true):Bool {
+		if(condition == true && this.defines.exists(name)) {
+			this.defines.remove(name);
+			this.haxedefs.remove(name);
+			this.environment.remove(name);
+
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks if a define exists.
+	 *
+	 * @param	name		The name of the define.
+	 *
+	 * @return	True if the define is found.
+	 */
+	public inline function defined(name:String):Bool {
+		return this.defines.exists(name);
+	}
+
+	/**
+	 * Sets a haxe flag.
+	 * Parsed as `-D name`, `-D name=value`, or `-dce`.
+	 *
+	 * @param	flag		The flag (Example: "-D", "-lib", "-dce").
+	 * @param	name		The key for the flag.
+	 * @param	value		If this is not null, then the flag's key will be given a value.
+	 */
+	public inline function setHaxeFlag(flag:String, ?name:Null<String>, ?value:Null<String>):Void {
+		this.haxeflags.push(formatHaxedef(flag, name, value));
+	}
+
+	/**
+	 * Removes a haxe flag.
+	 * Parsed as `-D name`, `-D name=value`, or `-dce`.
+	 * NOTE: All of the values need to be the same in order to properly remove the define.
+	 *
+	 * @param	flag		The flag (Example: "-D", "-lib", "-dce").
+	 * @param	name		The key for the flag.
+	 * @param	value		If this is not null, then the flag's key will be given a value.
+	 *
+	 * @return	True if the haxe flag is successfully removed.
+	 */
+	public function removeHaxeFlag(flag:String, ?name:Null<String>, ?value:Null<String>):Bool {
+		var fullFlag:String = formatHaxedef(flag, name, value);
+		if(isHaxeFlag(fullFlag)) {
+			this.haxeflags.remove(fullFlag);
+			return true;
+		}
+		return false;
+	}
+
+	
+	/**
+	 * Checks if a haxe flag exists.
+	 *
+	 * @param	flag		The FULL flag ("-D myName=Value").
+	 *
+	 * @return	True if the haxe flag exists.
+	 */
+	public inline function isHaxeFlag(flag:String):Bool {
+		return (this.haxeflags.indexOf(flag) != -1);
+	}
+
+	/**
+	 * A Shorter way of doing `setHaxeFlag("-D")`.
+	 *
+	 * @param	name		The key for the define.
+	 * @param	value		If this is not null, then the define's key will be given a value.
+	 */
+	public inline function setHaxeDefine(name:String, ?value:Null<String>):Void {
+		setHaxeFlag("-D", name, value);
+	}
+
+	/**
+	 * A Shorter way of doing `removeHaxeFlag("-D")`.
+	 *
+	 * @param	name		The key for the define.
+	 * @param	value		If this is not null, then the define's key will be given a value.
+	 *
+	 * @return	True if the define is successfully removed.
+	 */
+	public inline function removeHaxeDefine(name:String, ?value:Null<String>):Bool {
+		return removeHaxeFlag("-D", name, value);
+	}
+
+	/**
+	 * A Shorter way of doing `isHaxeFlag("-D")`.
+	 *
+	 * @param	flag		The FULL flag value ("myName=Value").
+	 *
+	 * @return	True if the haxe define exists.
+	 */
+	public inline function isHaxeDefine(flag:String):Bool {
+		return (this.haxeflags.indexOf(flag) != -1);
+	}
+
+	/**
+	 * Adds a macro to the program. Equivalent to doing `--macro flag`.
+	 *
+	 * @param	value		The macro's value.
+	 */
+	public inline function addMacro(value:String):Void {
+		setHaxeFlag('--macro', value);
+	}
+
+	/**
+	 * Removes a macro from the program.
+	 *
+	 * @param	value		The macro's value.
+	 *
+	 * @return	True if the haxe macro was successfully removed.
+	 */
+	public inline function removeMacro(value:String):Bool {
+		return removeHaxeFlag('--macro', value);
+	}
+
+	/**
+	 * Adds a haxelib to the project.
+	 *
+	 * @param	name		The name of the haxelib.
+	 * @param	version		A specific version of the haxelib to be used.
+	 *						If left unspecified, it defaults to the version
+	 *						set by your global haxelib folder.
+	 */
+	public inline function addHaxelib(name:String, ?version:String):Void {
+		this.haxelibs.push(new Haxelib(name, version));
+	}
+
+	/**
+	 * Configures Android target specific values.
+	 *
+	 * @param	gradleVersion		If not-null, uses a specific Gradle version to use.
+	 * @param	gradlePlugin		If not-null, uses a specific Gradle plugin version to use.
+	 * @param	ndkVersion			If not-null, uses a specific Android NDK version to use.
+	 * @param	minimumSDKVersion	If not-null, sets the minimum Android SDK version that's
+	 *								required for the project to run on.
+	 * @param	targetSDKVersion	If not-null, sets the target Android SDK version. This version
+	 *								will be prioritized over any other SDK version.
+	 */
+	public function configureAndroid(gradleVersion:String = null, gradlePlugin:String = null, ndkVersion:String = null, minimumSDKVersion:Null<Int> = null, targetSDKVersion:Null<Int> = null) {
+		if(gradleVersion != null) this.config.set("android.gradle-version", gradleVersion);
+		if(gradlePlugin != null) this.config.set("android.gradle-plugin", gradlePlugin);
+		if(ndkVersion != null) this.config.set("android.ndkVersion", ndkVersion);
+		if(minimumSDKVersion != null) this.config.set("android.minimum-sdk-version", minimumSDKVersion);
+		if(targetSDKVersion != null) this.config.set("android.target-sdk-version", targetSDKVersion);
+	}
+
+	inline function formatHaxedef(flag:String, ?name:Null<String>, ?value:Null<String>):String {
+		return (flag + (name != null ? ' ${name}' : '') + (value != null ? '=${value}' : ''));
+	}
+
+	/**
+	 * Returns the build target as a readable string.
+	 *
+	 * @return	The build target, as a string.
+	 */
+	public function stringifyBuildTarget():String {
+		return switch(this.target) {
+			case WINDOWS: "Windows";
+			case LINUX: "Linux";
+			case MAC: "MacOS";
+			case HTML5: "Browser (HTML5)";
+			case ANDROID: "Android";
+			case IOS: "IPhone (IOS)";
+			case FLASH: "Adobe Flash";
+			case AIR: "Adobe Air";
+			case BLACKBERRY: "Blackberry";
+			case CONSOLE_PC: "PC Console";
+			case FIREFOX: "Firefox";
+			case WIIU: "Wii U";
+			case VITA: "Playstation Vita";
+			case PS3: "Playstation 3";
+			case PS4: "Playstation 4";
+			case TIZEN: "Tizen";
+			case WEBOS: "WebOS";
+			case XBOX1: "XBox";
+			case EMSCRIPTEN: "EmScripten";
+			case TVOS: "TV OS";
+			default: "Unknown";
+		}
+	}
+
+	public inline function get_hashlink():Bool {
+		return this.targetFlags.exists("hl");
+	}
+
+	public inline function get_neko():Bool {
+		return this.targetFlags.exists("neko");
+	}
+
+	public inline function get_x32():Bool {
+		return this.architectures.contains(Architecture.X86);
+	}
+
+	public inline function get_x64():Bool {
+		return this.architectures.contains(Architecture.X64);
+	}
+}
